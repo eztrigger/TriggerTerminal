@@ -9,7 +9,7 @@ const stage = join(root, '.desktop-stage');
 const runtime = join(stage, 'runtime');
 const lock = JSON.parse(readFileSync(join(root, 'desktop/runtime-lock.json')));
 const target = lock.platforms[`${process.platform}-${process.arch}`];
-if (!target) throw new Error('Build on macOS arm64/x64 or Windows x64.');
+if (!target) throw new Error('Build on macOS arm64 or Windows x64.');
 if (!existsSync(join(root, 'web/.next/BUILD_ID')) || !existsSync(join(root, 'server/dist/index.js'))) throw new Error('Run npm run build first.');
 const cache = join(root, '.desktop-cache'); mkdirSync(cache, { recursive: true });
 async function download(url, name, hash) {

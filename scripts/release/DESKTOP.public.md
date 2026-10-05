@@ -7,7 +7,6 @@
 The installers include Node.js, Python and application dependencies. Users do not need a terminal, npm or Python. IBKR Gateway / TWS is separate broker software: install it, sign in and enable its API to use IBKR data. Yahoo Finance charts and option chains do not require an IBKR connection.
 
 - **Apple 芯片 Mac / Apple silicon Mac:** `TriggerTerminal-0.1.0-mac-arm64.dmg`
-- **Intel Mac:** `TriggerTerminal-0.1.0-mac-x64.dmg`
 - **Windows 10/11 x64:** `TriggerTerminal-0.1.0-win-x64.exe`
 
 Mac：打开 DMG，把 TriggerTerminal 拖到 Applications（应用程序），弹出安装盘，再从“应用程序”双击打开。桌面包最低支持 macOS 14。Windows：双击 EXE，选择安装位置并完成安装，以后从开始菜单或桌面快捷方式打开。Windows ARM 原生包暂未提供。
@@ -39,9 +38,9 @@ Workspace layout, language and other browser settings live in the same applicati
 
 ## 构建 / Building
 
-在目标系统及架构上构建。Apple 芯片 Mac 生成 arm64，Intel Mac 生成 x64，Windows x64 生成 Windows 安装程序。需要 Node 22、Git，以及原生依赖需要时的编译工具；使用者不需要这些工具。
+在目标系统及架构上构建。Apple 芯片 Mac 生成 arm64，Windows x64 生成 Windows 安装程序。需要 Node 22、Git，以及原生依赖需要时的编译工具；使用者不需要这些工具。
 
-Build on the target OS and architecture. Apple silicon Macs produce arm64 builds, Intel Macs produce x64 builds, and Windows x64 produces the Windows installer. Builders need Node 22, Git and native compilation tools if required by a dependency; end users do not.
+Build on the target OS and architecture. Apple silicon Macs produce arm64 builds, and Windows x64 produces the Windows installer. Builders need Node 22, Git and native compilation tools if required by a dependency; end users do not.
 
 ```sh
 npm ci
@@ -60,9 +59,9 @@ Output is written to `releases/desktop`. Preparation copies an explicit set of a
 
 ### GitHub 构建 / GitHub builds
 
-进入仓库 Actions → Desktop installers → Run workflow。三个任务分别生成 Mac arm64、Mac x64 和 Windows x64 安装包，并启动实际打包应用检查页面、空白账户和退出后的服务清理。Windows 还会先运行安装程序。结果保存在该次运行的 Artifacts 中；确认后可放入 GitHub Releases 供用户下载。
+进入仓库 Actions → Desktop installers → Run workflow。两个任务分别生成 Apple 芯片 Mac 和 Windows x64 安装包，并启动实际打包应用检查页面、空白账户和退出后的服务清理。Windows 还会先运行安装程序。结果保存在该次运行的 Artifacts 中；确认后可放入 GitHub Releases 供用户下载。
 
-Open Actions → Desktop installers → Run workflow. Separate jobs build Mac arm64, Mac x64 and Windows x64 installers, then launch the packaged app to check the page, empty accounts and service cleanup. Windows also runs the installer first. Downloads appear under that run's Artifacts; validated packages can then be attached to a GitHub Release.
+Open Actions → Desktop installers → Run workflow. Separate jobs build Apple silicon Mac and Windows x64 installers, then launch the packaged app to check the page, empty accounts and service cleanup. Windows also runs the installer first. Downloads appear under that run's Artifacts; validated packages can then be attached to a GitHub Release.
 
 ### 签名 / Signing
 

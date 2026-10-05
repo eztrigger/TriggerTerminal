@@ -2,6 +2,12 @@ name: Desktop installers
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Installer platform
+        type: choice
+        default: all
+        options: [all, mac, win]
 
 permissions:
   contents: read
@@ -11,16 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-15
-            platform: mac
-            arch: arm64
-          - os: macos-15-intel
-            platform: mac
-            arch: x64
-          - os: windows-latest
-            platform: win
-            arch: x64
+        include: ${{ fromJSON(inputs.platform == 'win' && '[{"os":"windows-latest","platform":"win","arch":"x64"}]' || inputs.platform == 'mac' && '[{"os":"macos-15","platform":"mac","arch":"arm64"}]' || '[{"os":"macos-15","platform":"mac","arch":"arm64"},{"os":"windows-latest","platform":"win","arch":"x64"}]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 35
     env:
@@ -48,7 +45,7 @@ jobs:
         if: matrix.platform == 'mac'
         shell: bash
         run: |
-          if [ '${{ matrix.arch }}' = 'arm64' ]; then APP='releases/desktop/mac-arm64/TriggerTerminal.app'; else APP='releases/desktop/mac/TriggerTerminal.app'; fi
+          APP='releases/desktop/mac-arm64/TriggerTerminal.app'
           node scripts/smoke-desktop.mjs "$APP/Contents/MacOS/TriggerTerminal"
       - name: Install and smoke test Windows app
         if: matrix.platform == 'win'

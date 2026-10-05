@@ -1,8 +1,8 @@
 # triggerterminal
 
-桌面安装包支持 Mac（Apple 芯片和 Intel）及 Windows x64，内置运行环境。安装、数据位置和签名状态见 [桌面版说明](desktop/README.md)。下载入口为 [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases)。没有安装包时可按下面的方法从源码运行。
+桌面安装包支持 Mac（Apple 芯片）及 Windows x64，内置运行环境。安装、数据位置和签名状态见 [桌面版说明](desktop/README.md)。下载入口为 [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases)。没有安装包时可按下面的方法从源码运行。
 
-Desktop installers for Mac (Apple silicon and Intel) and Windows x64 include the required runtimes. See the [desktop guide](desktop/README.md) for installation, data locations and signing status. Downloads are provided through [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases). The source setup below remains available.
+Desktop installers for Mac (Apple silicon) and Windows x64 include the required runtimes. See the [desktop guide](desktop/README.md) for installation, data locations and signing status. Downloads are provided through [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases). The source setup below remains available.
 
 
 一个在本机运行的行情终端和持仓账本。支持中英文界面、IBKR 只读连接、Yahoo Finance 行情与期权链，以及按账户、币种分开的持仓和资金记录。
