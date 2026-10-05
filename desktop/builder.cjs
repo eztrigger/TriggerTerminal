@@ -1,5 +1,10 @@
 const path = require('node:path');
 const fs = require('node:fs');
+// The bundled runtimes make ultra compression slow on hosted Windows runners.
+// Keep a normal compression level unless the builder explicitly overrides it.
+if (process.platform === 'win32' && !process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL) {
+  process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL = '5';
+}
 // Missing optional GitHub secrets arrive as empty strings, not undefined.
 for (const key of ['CSC_LINK', 'CSC_KEY_PASSWORD', 'WIN_CSC_LINK', 'WIN_CSC_KEY_PASSWORD', 'APPLE_ID', 'APPLE_APP_SPECIFIC_PASSWORD', 'APPLE_TEAM_ID']) {
   if (process.env[key] === '') delete process.env[key];
