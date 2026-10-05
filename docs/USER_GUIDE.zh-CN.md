@@ -1,5 +1,8 @@
 # triggerterminal 使用说明
 
+如果你下载的是 Mac 或 Windows 安装包，请先看[桌面安装说明](../desktop/README.md)，不需要执行下面的源码安装命令。本文中的功能操作说明同样适用于桌面版。
+
+
 [English](USER_GUIDE.en.md) · [项目首页](../README.md)
 
 triggerterminal 把行情、期权链和本地持仓账本放在一个界面里。你可以只用它看行情，也可以手动记账，或者读取本机 IBKR Gateway / TWS 的账户快照。
@@ -67,9 +70,9 @@ python3 -m venv bridge/.venv
 bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
 ```
 
-程序按 `bridge/.venv/bin/python` 这个位置寻找桥接环境。只把依赖装进系统 Python，不能替代这一步。
+源码运行默认使用 `bridge/.venv/bin/python`（Windows 为 `bridge/.venv/Scripts/python.exe`），也可通过 `PYTHON_EXECUTABLE` 指定解释器。桌面安装包会自动使用内置 Python。
 
-macOS 原生窗口的编译方式见[桌面版说明](../desktop/README.md)。源码包不含现成的 `.app` 或签名安装程序；初次使用可以先运行网页版。
+Mac 和 Windows 安装包的使用与构建方式见[桌面版说明](../desktop/README.md)。安装包单独发布，不包含在源码 ZIP 中。
 
 ## 2. 第一次打开
 
@@ -113,7 +116,7 @@ Yahoo 模式不需要登录 IBKR 才能加载图表和期权链，但顶部的�
 
 ## 4. 连接 IBKR
 
-先完成 Python 桥接环境安装，然后启动并登录你自己的 IB Gateway 或 Trader Workstation。账户密码只在 IBKR 程序里输入，triggerterminal 不需要保存它。
+源码版先完成 Python 桥接环境安装，桌面安装包已内置桥接环境。然后启动并登录你自己的 IB Gateway 或 Trader Workstation。账户密码只在 IBKR 程序里输入，triggerterminal 不需要保存它。
 
 在 IBKR 程序中允许本机 Socket API 连接，使用只读 API 即可。再打开：
 

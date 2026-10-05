@@ -1,3 +1,4 @@
+import { pythonExecutable } from './python.js';
 import { searchIbkr } from './ibkr-search.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -26,7 +27,7 @@ function stop() {
 }
 function start() {
   if (child) return child;
-  const proc = spawn(join(root, 'bridge/.venv/bin/python'), ['-u', join(root, 'bridge/ibkr.py')], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const proc = spawn(pythonExecutable(root), ['-u', join(root, 'bridge/ibkr.py')], { stdio: ['pipe', 'pipe', 'pipe'] });
   child = proc;
   // Never log private account payloads or Gateway errors to application logs.
   proc.stderr.on('data', () => {});

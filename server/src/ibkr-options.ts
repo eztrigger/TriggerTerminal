@@ -1,3 +1,4 @@
+import { pythonExecutable } from './python.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { readFileSync } from 'node:fs';
@@ -22,7 +23,7 @@ function stop() {
 }
 function start() {
   if (child) return child;
-  const proc = spawn(join(root, 'bridge/.venv/bin/python'), ['-u', join(root, 'bridge/ibkr_market_worker.py')], { stdio: ['pipe','pipe','pipe'] });
+  const proc = spawn(pythonExecutable(root), ['-u', join(root, 'bridge/ibkr_market_worker.py')], { stdio: ['pipe','pipe','pipe'] });
   child = proc;
   proc.stderr.on('data', () => {});
   createInterface({ input: proc.stdout }).on('line', line => {

@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(join(root, 'scripts/public-release-files.json'), 'utf8'));
-const forbidden = /(^|\/)(data|\.git|node_modules|runtime|\.venv|__pycache__|\.next|\.claude|\.codex)(\/|$)|\.(db|sqlite|log|pyc|png|jpg|zip|tsbuildinfo|icloud-backup)$|(^|\/)\.env($|\.)/i;
+const forbidden = /(^|\/)(data|\.desktop-stage|\.desktop-cache|releases|\.git|node_modules|runtime|\.venv|__pycache__|\.next|\.claude|\.codex)(\/|$)|\.(db|sqlite|log|pyc|png|jpg|zip|tsbuildinfo|icloud-backup)$|(^|\/)\.env($|\.)/i;
 const excludedFeatures = /^(?:server\/src\/(?:csp\/|crypto\/|portfolio-analysis|providers\/(?:binance|coingecko))|web\/(?:app\/(?:csp|crypto-holdings|analysis)\/|components\/(?:CspScreener|CryptoHoldings|PortfolioAnalysis|csp\.css|widgets\/CryptoWidget)|lib\/(?:portfolio-analysis|black-scholes))|bridge\/(?:test_)?csp_worker\.py)/;
 
 export function checkPath(path) {

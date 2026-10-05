@@ -39,3 +39,6 @@ data/
 releases/
 release-verification/
 *.app/
+
+.desktop-stage/
+.desktop-cache/

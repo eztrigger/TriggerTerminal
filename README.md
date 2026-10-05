@@ -1,5 +1,10 @@
 # triggerterminal
 
+桌面安装包支持 Mac（Apple 芯片和 Intel）及 Windows x64，内置运行环境。安装、数据位置和签名状态见 [桌面版说明](desktop/README.md)。下载入口为 [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases)。没有安装包时可按下面的方法从源码运行。
+
+Desktop installers for Mac (Apple silicon and Intel) and Windows x64 include the required runtimes. See the [desktop guide](desktop/README.md) for installation, data locations and signing status. Downloads are provided through [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases). The source setup below remains available.
+
+
 一个在本机运行的行情终端和持仓账本。支持中英文界面、IBKR 只读连接、Yahoo Finance 行情与期权链，以及按账户、币种分开的持仓和资金记录。
 
 A local market terminal and holdings ledger with Chinese and English interfaces, read-only IBKR integration, Yahoo Finance quotes and option chains, and account-by-account records in their original currencies.
@@ -50,13 +55,13 @@ bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
 
 没有 IBKR 也可以使用 Yahoo 图表、期权链和手动账本。**选择 Yahoo 后要重启服务，刷新网页不会让新的行情源配置生效。** 当前的代码搜索仍依赖 IBKR；没有连接时可以直接在自选中输入代码，或修改面板标题旁的代码。
 
-完整步骤、界面操作和常见报错见[中文使用说明](docs/USER_GUIDE.zh-CN.md)。macOS 原生窗口是可选项，见[桌面版说明](desktop/README.md)。本包是源码，不是双击即可安装的桌面应用。
+完整步骤、界面操作和常见报错见[中文使用说明](docs/USER_GUIDE.zh-CN.md)。Mac 和 Windows 安装包单独发布，见[桌面版说明](desktop/README.md)。
 
 ### 首次使用与数据
 
 新安装的个人账户、持仓、现金和交易记录为空。默认图表和自选中的代码是通用示例，旧版账本里的 `Main` 是空容器，不含作者的记录。
 
-使用后，账户与账本数据保存在本机 `data/`；布局、自选和语言偏好保存在浏览器或桌面应用中。备份前先停止服务，再复制整个 `data/`。不要把这个目录上传到 GitHub。
+源码版的账户与账本数据保存在本机 `data/`；桌面版可从应用菜单打开数据文件夹。布局、自选和语言偏好保存在浏览器或桌面应用中。备份前先停止服务，再复制整个 `data/`。不要把这个目录上传到 GitHub。
 
 这是单用户的本机应用。不要把它当作有用户登录与权限隔离的公共网站部署，也不要把账户数据放到 GitHub Pages。行情和新闻仍会连接外部来源。详见[隐私说明](docs/PRIVACY.md)。
 
@@ -104,7 +109,7 @@ bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
 
 Yahoo charts, option chains and manual bookkeeping can be used without IBKR. **Restart the services after selecting Yahoo; refreshing the browser does not activate a saved source change.** Symbol search still uses IBKR. Without it, enter a symbol directly in the watchlist or edit a panel's symbol.
 
-See the [English user guide](docs/USER_GUIDE.en.md) for the full setup, daily use and troubleshooting. The [native macOS wrapper](desktop/README.md) is optional. This release is source code, not a ready-made desktop installer.
+See the [English user guide](docs/USER_GUIDE.en.md) for the full setup, daily use and troubleshooting. Prebuilt Mac and Windows installers are distributed separately; see the [desktop guide](desktop/README.md).
 
 ### First use and storage
 

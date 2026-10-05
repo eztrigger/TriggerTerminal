@@ -1,0 +1,10 @@
+{
+  "nodeVersion": "22.23.3",
+  "pythonRelease": "20261003",
+  "pythonVersion": "3.12.15",
+  "platforms": {
+    "darwin-arm64": { "nodeFile": "node-v22.23.3-darwin-arm64.tar.gz", "nodeSha256": "23b25245dcfb9af7262f8ff142e9e2e0af025368117329e7a7458a51e5922f53", "pythonTarget": "aarch64-apple-darwin", "pythonSha256": "ad8d0c637c0a36b967b310e2c07254f4d2ca8cabaa7699e55ed6290aceb481a2" },
+    "darwin-x64": { "nodeFile": "node-v22.23.3-darwin-x64.tar.gz", "nodeSha256": "8a677b0219178efd6eb0e475457c4afb452b521a92f6e67845a73bd85727f2a8", "pythonTarget": "x86_64-apple-darwin", "pythonSha256": "562c30864ece2cb1d3e0ad66a1acd498611a47e5a10ce81b99158bef1ccbd355" },
+    "win32-x64": { "nodeFile": "node-v22.23.3-win-x64.zip", "nodeSha256": "2b0ff57b049cda1bbcea2240eec20467018713c1efe1f7360c2681859b90ed71", "pythonTarget": "x86_64-pc-windows-msvc", "pythonSha256": "6fba7f2ae506facf41d457ea8293c7497910a675c69a4e954875169410a50402" }
+  }
+}

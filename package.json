@@ -13,9 +13,16 @@
     "build": "npm run build -w server && npm run build -w web",
     "start": "concurrently -n api,web \"npm run start -w server\" \"npm run start -w web\"",
     "test": "npm run test -w server",
-    "lint": "npm run lint -w web"
+    "lint": "npm run lint -w web",
+    "desktop:prepare": "node scripts/prepare-desktop.mjs",
+    "desktop:package": "electron-builder --config desktop/builder.cjs --publish never",
+    "desktop:start": "electron desktop/main.cjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
-  }
+    "concurrently": "^9.1.2",
+    "electron": "44.5.1",
+    "electron-builder": "26.17.0",
+    "sharp": "0.35.4"
+  },
+  "version": "0.1.0"
 }

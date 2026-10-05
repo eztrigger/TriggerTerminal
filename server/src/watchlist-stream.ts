@@ -1,3 +1,4 @@
+import { pythonExecutable } from './python.js';
 import {Router} from 'express';
 import {randomBytes} from 'node:crypto';
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process';
@@ -39,7 +40,7 @@ export function attachWatchlistStream(server:Server){
    try{
     const cfg=JSON.parse(readFileSync(join(dataDir,'ibkr.json'),'utf8'));
     if(!child){
-     const proc=spawn(join(root,'bridge/.venv/bin/python'),['-u',join(root,'bridge/watchlist_worker.py')],{stdio:['pipe','pipe','pipe']});child=proc;proc.stderr.on('data',()=>{});
+     const proc=spawn(pythonExecutable(root),['-u',join(root,'bridge/watchlist_worker.py')],{stdio:['pipe','pipe','pipe']});child=proc;proc.stderr.on('data',()=>{});
      createInterface({input:proc.stdout}).on('line',line=>{try{broadcast(JSON.parse(line));}catch{}});
      const ended=()=>{if(child!==proc)return;child=undefined;for(const ws of clients.keys())ws.close(1011,'IBKR 推送服务重连');};
      proc.on('exit',ended);proc.on('error',ended);proc.stdin.on('error',ended);

@@ -1,5 +1,8 @@
 # Using triggerterminal
 
+For the downloadable Mac or Windows app, start with the [desktop installation guide](../desktop/README.md). You do not need the source installation steps below. Feature instructions in this guide apply to both versions.
+
+
 [中文说明](USER_GUIDE.zh-CN.md) · [Project home](../README.md)
 
 triggerterminal brings market data, option chains and a local holdings ledger into one interface. You can use it to follow prices, keep manual records, or read account snapshots from IB Gateway or Trader Workstation running on your computer.
@@ -67,9 +70,9 @@ python3 -m venv bridge/.venv
 bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
 ```
 
-The application looks for Python at `bridge/.venv/bin/python`. Installing the library only in your system Python does not create the bridge environment it expects.
+Source installations use `bridge/.venv/bin/python` (`bridge/.venv/Scripts/python.exe` on Windows), or the interpreter specified by `PYTHON_EXECUTABLE`. Desktop installers automatically use their bundled Python.
 
-The [macOS wrapper instructions](../desktop/README.md) cover the optional native window. This package does not include a ready-made `.app` or signed installer. Start with the browser version if you want to check the setup first.
+See the [desktop guide](../desktop/README.md) for Mac and Windows installation and build instructions. Installers are published separately from the source ZIP.
 
 ## 2. Your first session
 
@@ -113,7 +116,7 @@ Request frequency is not quote freshness. Charts request an update every minute.
 
 ## 4. Connect IBKR
 
-Install the Python bridge, then start and sign in to your own IB Gateway or Trader Workstation. Enter your broker password in the IBKR application, not in triggerterminal.
+For source installations, install the Python bridge first; desktop installers already include it. Then start and sign in to your own IB Gateway or Trader Workstation. Enter your broker password in the IBKR application, not in triggerterminal.
 
 Allow local Socket API connections in IBKR. Read-only API access is sufficient. In triggerterminal, open:
 

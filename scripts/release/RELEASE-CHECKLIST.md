@@ -6,7 +6,7 @@ using README.md. Upload only the exported source directory or its matching ZIP.
 ## Verified on 2026-10-05
 
 - Clean `npm ci` installation and production server/web builds passed.
-- 131 TypeScript tests, 21 Python bridge tests and 4 export safety tests passed.
+- 133 TypeScript tests, 21 Python bridge tests and 4 export safety tests passed.
 - Fresh isolated startup: zero user accounts, positions, groups, cash balances,
   ledger events, corrections and transactions. The legacy empty `Main` container
   is a built-in default, not a personal account or imported portfolio.
@@ -39,3 +39,11 @@ using README.md. Upload only the exported source directory or its matching ZIP.
 虚拟币、CSP 筛选和持仓分析功能已从此公开版移除，原来的个人版本未修改。
 此包是源码，按照 README 安装依赖并构建；你可以自行创建 GitHub 仓库并上传。
 自动检查不能保证覆盖未来加入的所有敏感信息，每次发布仍需检查待提交文件。
+
+## Desktop packages / 桌面安装包
+
+- Desktop installers are built separately from the clean source export.
+- Portable Node/Python archives are version-pinned and SHA-256 verified.
+- macOS arm64 relocated-app smoke test passed: rendered Chinese/English UI, empty accounts, language bridge, source persistence after restart, and process cleanup.
+- All customer data is created outside the installed application.
+- Signing credentials are supplied through secrets, never included in source.

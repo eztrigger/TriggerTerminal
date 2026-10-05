@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {dirname,resolve} from 'node:path';
 
 test('private paths and traversal are rejected',()=>{
-  for (const path of ['data/holdings.db','.git/config','web/.env.local','web/.next/build.js','bridge/.venv/bin/python','../private.txt','/tmp/private.txt','docs/account.png']) {
+  for (const path of ['.desktop-stage/runtime/node/bin/node','.desktop-cache/runtime.tar.gz','releases/desktop/app.dmg','data/holdings.db','.git/config','web/.env.local','web/.next/build.js','bridge/.venv/bin/python','../private.txt','/tmp/private.txt','docs/account.png']) {
     assert.throws(()=>checkPath(path));
   }
   checkPath('server/src/holdings.ts');
