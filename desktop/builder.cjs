@@ -42,6 +42,7 @@ module.exports = {
   mac: { target: ['dmg'], category: 'public.app-category.finance', icon: '.desktop-stage/icon.png', minimumSystemVersion: '14.0', identity: process.env.CSC_LINK ? undefined : '-', hardenedRuntime: Boolean(process.env.CSC_LINK), notarize: Boolean(process.env.APPLE_ID && process.env.APPLE_APP_SPECIFIC_PASSWORD && process.env.APPLE_TEAM_ID) },
   dmg: { title: 'TriggerTerminal', contents: [{ x: 150, y: 160, type: 'file' }, { x: 450, y: 160, type: 'link', path: '/Applications' }] },
   win: { target: ['nsis'], icon: '.desktop-stage/icon.png' },
-  nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, createDesktopShortcut: true, createStartMenuShortcut: true, deleteAppDataOnUninstall: false, installerLanguages: ['en_US', 'zh_CN'], displayLanguageSelector: true },
+  // Updates are manual, so differential 7z payloads only add build time here.
+  nsis: { differentialPackage: false, useZip: true, oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, createDesktopShortcut: true, createStartMenuShortcut: true, deleteAppDataOnUninstall: false, installerLanguages: ['en_US', 'zh_CN'], displayLanguageSelector: true },
   publish: null,
 };
