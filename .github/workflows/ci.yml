@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r bridge/requirements.txt
+      - run: python -m unittest discover -s bridge -p 'test_*.py'
+      - run: node --test scripts/public-release.test.mjs
+      - run: npm run test -w server
+      - run: npm run build -w server
+      - run: npm run build -w web
