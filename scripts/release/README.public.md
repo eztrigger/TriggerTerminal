@@ -155,9 +155,9 @@ The exporter creates a source folder, ZIP and checksum list from an explicit man
 
 ## 来源与许可 / Credits and license
 
-基于 [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal)，主项目使用 MIT 许可证，见 [LICENSE](LICENSE)。改编的 IBKR 代码保留了 Apache-2.0 来源与许可，位于 [third_party/AllYouNeedIsWheel](third_party/AllYouNeedIsWheel)；该上游应用不会随主程序启动。
+基于 [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal)，主项目使用 MIT 许可证，见 [LICENSE](LICENSE)。改编的 IBKR 代码位于 `bridge/ibkr_market_worker.py`，其 Apache-2.0 许可与来源见 [第三方声明](THIRD_PARTY_NOTICES.md)。上游应用源码不再随项目分发。
 
-Based on [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal). The main project is MIT licensed; see [LICENSE](LICENSE). Adapted IBKR code retains its Apache-2.0 attribution and source in [third_party/AllYouNeedIsWheel](third_party/AllYouNeedIsWheel). That upstream application is not started by this project.
+Based on [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal). The main project is MIT licensed; see [LICENSE](LICENSE). Adapted IBKR code lives in `bridge/ibkr_market_worker.py`; its Apache-2.0 license and attribution are listed in [Third-party notices](THIRD_PARTY_NOTICES.md). The upstream application source is no longer bundled.
 
 行情数据可能缺失、延迟或受权限限制。账本用于投资记录，不提供投资建议，也不替代券商对账单或税务核算。
 

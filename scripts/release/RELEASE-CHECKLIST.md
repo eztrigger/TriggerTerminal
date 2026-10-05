@@ -28,7 +28,7 @@ using README.md. Upload only the exported source directory or its matching ZIP.
 1. Use only the exported `triggerterminal` folder, not the working installation
    or the parent folder that contains verification screenshots.
 2. Create a new repository with new Git history. Do not copy an existing `.git`.
-3. Keep LICENSE and third_party attribution files.
+3. Keep LICENSE, THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt.
 4. Include dotfiles such as `.gitignore` and `.github/workflows/ci.yml`.
 5. Review staged files before committing. Never add private screenshots or data.
 6. Keep newly generated data, dependencies and build output ignored after local use.

@@ -1,5 +1,6 @@
 """Option-chain integration adapted from AllYouNeedIsWheel core/connection.py.
-Upstream Apache-2.0; full source/license: ../third_party/AllYouNeedIsWheel.
+Copyright 2025 Xiao Xiao. Licensed under Apache-2.0.
+See ../THIRD_PARTY_NOTICES.md and ../licenses/Apache-2.0.txt.
 Changes: bounded asynchronous reads, delayed/frozen prices, no fabricated quotes,
 no broker order methods. Runs in a separate process from portfolio/history.
 """
