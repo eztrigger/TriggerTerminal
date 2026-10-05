@@ -41,6 +41,23 @@ jobs:
       - run: npm run build
       - run: npm run desktop:prepare
       - run: npm run desktop:package -- --${{ matrix.platform }} --${{ matrix.arch }}
+        if: matrix.platform == 'mac'
+      - name: Package Windows installer
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: |
+          $stdout = Join-Path $env:RUNNER_TEMP 'desktop-package.stdout.log'
+          $stderr = Join-Path $env:RUNNER_TEMP 'desktop-package.stderr.log'
+          $build = Start-Process -FilePath (Get-Command node).Source -ArgumentList 'node_modules/electron-builder/cli.js', '--config', 'desktop/builder.cjs', '--publish', 'never', '--win', '--x64' -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+          while (-not $build.WaitForExit(30000)) {
+            Get-Content $stdout -Tail 6
+            Get-Content $stderr -Tail 6
+            Get-Process node,7za,makensis -ErrorAction SilentlyContinue | Select-Object ProcessName,Id,CPU,WorkingSet64 | Format-Table
+            Get-ChildItem releases/desktop -File | Select-Object Name,Length | Format-Table
+          }
+          Get-Content $stdout
+          Get-Content $stderr
+          if ($build.ExitCode -ne 0) { throw "Packaging failed: $($build.ExitCode)" }
       - name: Smoke test macOS app
         if: matrix.platform == 'mac'
         shell: bash
