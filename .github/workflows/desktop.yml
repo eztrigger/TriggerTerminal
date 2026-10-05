@@ -66,11 +66,22 @@ jobs:
           node scripts/smoke-desktop.mjs "$APP/Contents/MacOS/TriggerTerminal"
       - name: Install and smoke test Windows app
         if: matrix.platform == 'win'
+        timeout-minutes: 10
         shell: pwsh
         run: |
           $installer = Get-ChildItem releases/desktop/*.exe | Select-Object -First 1
           $destination = Join-Path $env:RUNNER_TEMP 'TriggerTerminalInstalled'
-          $installProcess = Start-Process -FilePath $installer.FullName -ArgumentList '/S', "/D=$destination" -Wait -PassThru
+          $installProcess = Start-Process -FilePath $installer.FullName -ArgumentList '/S', '/currentuser', "/D=$destination" -PassThru
+          $deadline = (Get-Date).AddMinutes(6)
+          while (-not $installProcess.WaitForExit(30000)) {
+            Get-Process | Where-Object ProcessName -Like '*TriggerTerminal*' | Select-Object ProcessName,Id,CPU,MainWindowTitle | Format-Table
+            if (Test-Path $destination) {
+              $files = Get-ChildItem $destination -Recurse -File
+              Write-Host "Installed files: $($files.Count)"
+            }
+            if ((Get-Date) -gt $deadline) { throw 'Installer timed out' }
+          }
+          Write-Host "Installer exited: $($installProcess.ExitCode)"
           if ($installProcess.ExitCode -ne 0) { throw "Installer failed: $($installProcess.ExitCode)" }
           node scripts/smoke-desktop.mjs "$destination/TriggerTerminal.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Installed app smoke test failed' }
