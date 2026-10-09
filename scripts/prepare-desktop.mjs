@@ -40,7 +40,7 @@ for (const name of ['package.json', 'package-lock.json', 'server/package.json', 
 }
 for (const name of ['licenses', 'docs', 'server/dist']) cpSync(join(root, name), join(runtime, name), { recursive: true, filter: p => !p.endsWith('.map') });
 mkdirSync(join(runtime, 'bridge'));
-for (const name of ['ibkr.py', 'ibkr_market_worker.py', 'watchlist_worker.py']) cpSync(join(root, 'bridge', name), join(runtime, 'bridge', name));
+for (const name of ['ibkr.py', 'ibkr_market_worker.py', 'watchlist_worker.py', 'csp_worker.py']) cpSync(join(root, 'bridge', name), join(runtime, 'bridge', name));
 cpSync(join(root, 'web/.next'), join(runtime, 'web/.next'), { recursive: true, filter: p => !['cache', 'dev', 'diagnostics'].includes(basename(p)) && !p.endsWith('.map') });
 if (existsSync(join(root, 'web/public'))) cpSync(join(root, 'web/public'), join(runtime, 'web/public'), { recursive: true });
 // Production dependencies are installed from the source lock with the bundled Node ABI.
@@ -53,7 +53,7 @@ const shell = join(stage, 'shell'); mkdirSync(join(shell, 'desktop'), { recursiv
 for (const name of ['main.cjs', 'preload.cjs', 'service-host.cjs']) cpSync(join(root, 'desktop', name), join(shell, 'desktop', name));
 const pkg = JSON.parse(readFileSync(join(root, 'package.json')));
 writeFileSync(join(shell, 'package.json'), JSON.stringify({ name: 'triggerterminal', version: pkg.version, description: 'A local market terminal and investment journal', author: 'TriggerTerminal contributors', license: 'MIT', main: 'desktop/main.cjs' }, null, 2));
-await sharp(join(root, 'desktop/icon.svg')).resize(1024, 1024).png().toFile(join(stage, 'icon.png'));
+await sharp(join(root, 'desktop/icon.png')).resize(1024, 1024).png().toFile(join(stage, 'icon.png'));
 // Explicit app inputs only. Dependencies may contain public test fixtures, but no local state is copied.
 for (const name of ['data', '.env', '.git', '.api-key']) if (existsSync(join(runtime, name))) throw new Error('Private runtime state in package: ' + name);
 console.log(`Desktop runtime ready: ${process.platform}-${process.arch}`);

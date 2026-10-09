@@ -1,5 +1,7 @@
 # Holdings Ledger / 持仓账本
 
+## Scope / 范围
+
 ## Operation Rules / 操作对照
 
 | Operation / 操作 | Cash / 现金 | Total P&L / 累计盈亏 | Positions / 持仓 |
@@ -120,7 +122,6 @@ IBKR 现金采用分币种 CashBalance，不重复加总 BASE。缺失现金保�
 
 Full broker trade/commission history (including coverage reconciliation) is not
 imported in this version. IBKR realized P&L is therefore displayed as unavailable,
-not zero. Displayed total P&L covers recorded realized P&L and available unrealized
-P&L; it does not fill in missing broker executions.
-当前未导入完整券商成交及佣金历史，因此 IBKR 已实现盈亏显示不可用而不是零。显示的累计盈亏
-仅覆盖已记录的已实现盈亏及可计算的未实现盈亏，不会补算缺失的券商成交。
+not zero. Cumulative equity-based results depend on complete external-flow entries.
+当前未导入完整券商成交及佣金历史，因此 IBKR 已实现盈亏显示不可用而不是零；资产变化口径的
+累计盈亏需要完整入出金记录。

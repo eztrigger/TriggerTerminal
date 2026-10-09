@@ -4,6 +4,7 @@
 
 - `data/holdings.db`: account identifiers, positions, asset notes, cash, P&L and ledger events.
 - `data/terminal.db`: legacy portfolio records.
+- `data/crypto.db`: private wallet address labels, read-only balance snapshots, manual crypto positions, cash and audit records. No private keys or seed phrases are accepted. Public wallet reads send the address to the selected network's public data service; asset pricing uses public token identifiers.
 - `data/ibkr.json`, `data/market-source.json`: local connection and provider preferences.
 - `data/.api-key`: generated local API authentication secret.
 - Other `data/` files: local backups, logs and historical runtime state. Treat the entire directory as private.

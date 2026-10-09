@@ -1,9 +1,11 @@
+import {createBrokerExecutions,brokerExecutionSchema} from './ibkr-executions.js';
 import { Router } from 'express';
+import {createAnalysisStore} from './analysis-store.js';
 import Database from 'better-sqlite3';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { dataDir } from './db.js';
-import { quoteHoldings } from './holdings-quotes.js';
+import { quoteHoldings, fillMissingFundPrices, fillMissingHoldingPrices } from './holdings-quotes.js';
 import { readIbkrSnapshot } from './ibkr.js';
 import {strategyIds} from './strategy-catalog.js';
 import { createLedger, cashSchema, actionSchema, flowSchema, closeCorrectionSchema,profitCorrectionSchema } from './holdings-ledger.js';
@@ -12,9 +14,10 @@ const text=z.string().trim().min(1).max(100);
 const nullableNumber=z.number().finite().nullable();
 const date=z.string().regex(/^\d{8}$/).refine(s=>{const d=new Date(s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8)+'T00:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10).replaceAll('-','')===s;},'无效到期日');
 export const legSchema=z.object({
+ tradeCommission:z.number().finite().nonnegative().optional(),
  openingCommission:z.number().finite().nonnegative().optional(),
  notes:z.string().max(2000).optional(),
- symbol:text,assetType:z.enum(['STK','ETF','FUND','OPT','FUT','FOP','CASH','OTHER']),
+ symbol:text,assetType:z.enum(['STK','ETF','FUND','OPT','FUT','FOP','CASH','CRYPTO','OTHER','DEPOSIT']),
  quantity:z.number().finite().refine(n=>n!==0,'数量不能为零'),multiplier:z.number().finite().positive().nullable(),
  currency:z.string().trim().min(1).max(12).transform(s=>s.toUpperCase()),
  expiry:z.union([date,z.literal('')]).default(''),right:z.enum(['C','P','']).default(''),
@@ -27,7 +30,7 @@ export const legSchema=z.object({
   c.addIssue({code:'custom',message:'期权需要有效到期日、Call/Put、行权价和整数张数'});
 });
 const strategySchema=z.string().refine(id=>strategyIds.has(id),'Invalid strategy classification');
-export const holdingSchema=z.object({strategyId:strategySchema.optional(),accountId:z.number().int().positive(),name:text,notes:z.string().max(2000).default(''),legs:z.array(legSchema).min(1).max(64),entryMode:z.enum(['INITIAL','TRADE']).default('INITIAL'),requestId:z.string().uuid().optional(),at:z.string().datetime().optional(),fee:z.number().finite().nonnegative().default(0)});
+export const holdingSchema=z.object({strategyId:strategySchema.optional(),accountId:z.number().int().positive(),name:text,autoPrice:z.boolean().optional(),legFees:z.array(z.number().finite().nonnegative()).max(64).optional(),notes:z.string().max(2000).default(''),legs:z.array(legSchema).min(1).max(64),entryMode:z.enum(['INITIAL','TRADE']).default('INITIAL'),requestId:z.string().uuid().optional(),at:z.string().datetime().optional(),fee:z.number().finite().nonnegative().default(0)});
 const accountSchema=z.object({broker:text,name:text,accountNumber:z.string().trim().max(100).default(''),cash:cashSchema.optional()});
 export function createHoldingsStore(path:string){
  const db=new Database(path);db.pragma('journal_mode = WAL');db.pragma('foreign_keys = ON');
@@ -37,6 +40,7 @@ export function createHoldingsStore(path:string){
  CREATE TABLE IF NOT EXISTS holding_group_members(position_id INTEGER PRIMARY KEY REFERENCES holding_positions(id),group_id INTEGER NOT NULL REFERENCES holding_groups(id) ON DELETE CASCADE);`);
  for(const table of ['holding_positions','holding_groups'])if(!(db.prepare('PRAGMA table_info('+table+')').all() as {name:string}[]).some(c=>c.name==='strategy_id'))db.exec('ALTER TABLE '+table+" ADD COLUMN strategy_id TEXT NOT NULL DEFAULT 'custom'");
  const ledger=createLedger(db);
+ const brokerExecutions=createBrokerExecutions(db);
  const addGroupMembers=db.transaction((groupId:number,ids:number[])=>{
   if(!db.prepare('SELECT 1 FROM holding_groups WHERE id=?').get(groupId))throw new Error('组合不存在');
   const members=db.prepare('SELECT position_id FROM holding_group_members WHERE group_id=?').all(groupId) as {position_id:number}[];
@@ -67,6 +71,14 @@ export function createHoldingsStore(path:string){
  const addAccount=db.transaction((value:z.infer<typeof accountSchema>)=>{const id=Number(db.prepare('INSERT INTO holding_accounts(broker,name,account_number) VALUES(?,?,?)').run(value.broker,value.name,value.accountNumber).lastInsertRowid);if(value.cash)ledger.initialize(id,value.cash);return id;});
  const save=db.transaction((value:z.infer<typeof holdingSchema>,id?:number)=>{
   if(!db.prepare('SELECT id FROM holding_accounts WHERE id=?').get(value.accountId))throw new Error('账户不存在');
+  if(value.legFees){
+   if(value.legFees.length!==value.legs.length||value.fee!==0)throw new Error('逐项佣金必须与资产一一对应，不能同时填写总佣金');
+   if(value.entryMode==='INITIAL')value={...value,legs:value.legs.map((l,i)=>{
+    const fee=value.legFees![i];if(fee>0&&(l.avgCost===null||l.multiplier===null))throw new Error('填写佣金需要单位成本和乘数');
+    return {...l,openingCommission:fee,avgCost:fee>0?l.avgCost!+fee/(l.quantity*l.multiplier!):l.avgCost};
+   })};
+   else value={...value,fee:value.legFees.reduce((a,b)=>a+b,0),legs:value.legs.map((l,i)=>({...l,tradeCommission:value.legFees![i]}))};
+  }
   if(id){
    const row:any=db.prepare('SELECT source,account_id FROM holding_positions WHERE id=?').get(id);
    if(!row||row.source!=='MANUAL')throw new Error('只能编辑手动仓位，IBKR 仓位请通过同步更新');
@@ -81,7 +93,7 @@ export function createHoldingsStore(path:string){
    const prior:any=db.prepare('SELECT payload FROM holding_events WHERE request_id=?').get(value.requestId);
    return JSON.parse(prior.payload).positionId as number;
   }
-  if(value.entryMode==='INITIAL'&&value.fee>0) {
+  if(!value.legFees&&value.entryMode==='INITIAL'&&value.fee>0) {
    if(new Set(value.legs.map(l=>l.currency)).size!==1||value.legs.some(l=>l.avgCost===null||l.multiplier===null))throw new Error('填写期初佣金时，请按币种分别录入并填写成本和乘数');
    const units=value.legs.reduce((sum,l)=>sum+Math.abs(l.quantity*l.multiplier!),0);
    value={...value,legs:value.legs.map(l=>{const allocated=value.fee*Math.abs(l.quantity*l.multiplier!)/units;return {...l,openingCommission:allocated,avgCost:l.avgCost!+allocated/(l.quantity*l.multiplier!)};})};
@@ -143,15 +155,33 @@ export function createHoldingsStore(path:string){
   for(const g of groups)db.prepare('DELETE FROM holding_groups WHERE id=? AND NOT EXISTS (SELECT 1 FROM holding_group_members WHERE group_id=?)').run(g.group_id,g.group_id);
   db.prepare('DELETE FROM holding_accounts WHERE id=?').run(id);
  });
- return {db,list:()=>({...list(),...ledger.list()}),addAccount,save,sync,group,addGroupMembers,removeGroupMember,applyPrices,remove,removeAccount,ledger};
+ return {db,brokerExecutions,list:()=>{const l=ledger.list();return {...list(),...l,events:[...l.events,...brokerExecutions.list()].sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))};},addAccount,save,sync,group,addGroupMembers,removeGroupMember,applyPrices,remove,removeAccount,ledger};
 }
 const store=createHoldingsStore(join(dataDir,'holdings.db'));
-const snapshotSchema=z.object({connected:z.literal(true),positionsComplete:z.literal(true),account:z.string().min(1),syncedAt:z.string(),fields:z.array(z.object({tag:z.string(),currency:z.string(),value:z.string()})).default([]),positions:z.array(z.object({
+const snapshotSchema=z.object({executionsComplete:z.boolean().default(false),executions:z.array(brokerExecutionSchema).default([]),connected:z.literal(true),positionsComplete:z.literal(true),account:z.string().min(1),syncedAt:z.string(),fields:z.array(z.object({tag:z.string(),currency:z.string(),value:z.string()})).default([]),positions:z.array(z.object({
  conId:z.number().int().positive(),symbol:text,localSymbol:z.string(),secType:z.string(),quantity:z.number().finite(),multiplier:nullableNumber,currency:text,expiry:z.string(),right:z.string(),strike:nullableNumber,unitCost:nullableNumber,marketPrice:nullableNumber,marketValue:nullableNumber,unrealizedPnl:nullableNumber
 }))});
 export const holdingsRouter=Router();
 holdingsRouter.use((_q,r,n)=>{r.set('Cache-Control','no-store');n();});
 holdingsRouter.get('/',(_q,r)=>r.json(store.list()));
+const analysisStore=createAnalysisStore(store.db);
+const allocationSchema=z.object({positionId:z.number().int().positive(),legKey:z.string().min(1).max(1000),quantity:z.number().finite().refine(n=>n!==0)});
+holdingsRouter.get('/analysis',(_q,r)=>r.json(analysisStore.list()));
+holdingsRouter.post('/analysis/strategies',(q,r)=>{
+ const p=z.object({id:z.number().int().positive().optional(),name:text,strategyId:strategySchema,allocations:z.array(allocationSchema).min(1).max(64)}).safeParse(q.body);
+ if(!p.success){r.status(400).json({error:'Invalid strategy fields'});return;}
+ try{r.json({id:analysisStore.save(p.data.name,p.data.strategyId,p.data.allocations,p.data.id)});}catch(e){r.status(400).json({error:(e as Error).message});}
+});
+holdingsRouter.delete('/analysis/strategies/:id',(q,r)=>{
+ const id=Number(q.params.id);if(!Number.isSafeInteger(id)||id<=0){r.status(400).json({error:'Invalid strategy ID'});return;}
+ analysisStore.remove(id);r.json({ok:true});
+});
+holdingsRouter.post('/analysis/classes',(q,r)=>{
+ const p=z.object({positionId:z.number().int().positive(),legKey:z.string().min(1).max(1000),category:z.enum(['cash','stocks','options','futures','funds','deposits','unknown'])}).safeParse(q.body);
+ if(!p.success){r.status(400).json({error:'Invalid asset category'});return;}
+ try{analysisStore.classify(p.data.positionId,p.data.legKey,p.data.category);r.json({ok:true});}catch(e){r.status(400).json({error:(e as Error).message});}
+});
+
 holdingsRouter.post('/accounts/:id/initialize',(q,r)=>{
  const p=cashSchema.safeParse(q.body.cash);if(!p.success){r.status(400).json({error:'请填写有效的分币种剩余现金'});return;}
  try{r.json(store.ledger.initialize(Number(q.params.id),p.data));}catch(e){r.status(400).json({error:(e as Error).message});}
@@ -210,10 +240,10 @@ holdingsRouter.delete('/accounts/:id',(q,r)=>{
  if(!p.success||!Number.isSafeInteger(id)||id<=0){r.status(400).json({error:'请输入完整账户名称以确认删除'});return;}
  try{store.removeAccount(id,p.data.confirmation);r.json({ok:true});}catch(e){r.status(400).json({error:(e as Error).message});}
 });
-for(const method of ['post','put'] as const)holdingsRouter[method](method==='post'?'/positions':'/positions/:id',(q,r)=>{
+for(const method of ['post','put'] as const)holdingsRouter[method](method==='post'?'/positions':'/positions/:id',(q,r)=>{void(async()=>{
  const p=holdingSchema.safeParse(q.body);if(!p.success){r.status(400).json({error:p.error.issues.map(i=>i.message).join('；')});return;}
- try{r.json({id:store.save(p.data,method==='put'?Number((q.params as {id:string}).id):undefined)});}catch(e){r.status(400).json({error:(e as Error).message});}
-});
+ try{p.data.legs=await (p.data.autoPrice?fillMissingHoldingPrices(p.data.legs):fillMissingFundPrices(p.data.legs));r.json({id:store.save(p.data,method==='put'?Number((q.params as {id:string}).id):undefined)});}catch(e){r.status(400).json({error:(e as Error).message});}
+})().catch(e=>r.status(400).json({error:(e as Error).message}));});
 holdingsRouter.post('/positions/:id/status',(q,r)=>{
  r.status(400).json({error:'归档已停用，请填写实际成交进行平仓'});
 });
@@ -221,8 +251,8 @@ holdingsRouter.post('/sync',(q,r,next)=>{void(async()=>{
  const account=typeof q.body.account==='string'?q.body.account:'';
  const snap=snapshotSchema.parse(await readIbkrSnapshot(account));
  if(account&&snap.account!==account)throw new Error('账户不匹配，未更新本地仓位');
- const accountId=store.db.transaction(()=>{const id=store.sync(snap.account,snap.positions,snap.syncedAt);store.ledger.syncCash(id,snap.fields,snap.syncedAt);return id;})();
- r.json({accountId,count:snap.positions.length,syncedAt:snap.syncedAt});
+ const accountId=store.db.transaction(()=>{const id=store.sync(snap.account,snap.positions,snap.syncedAt);store.ledger.syncCash(id,snap.fields,snap.syncedAt);store.brokerExecutions.sync(id,snap.executions,snap.syncedAt);return id;})();
+ r.json({accountId,count:snap.positions.length,syncedAt:snap.syncedAt,executionsComplete:snap.executionsComplete,executionCount:snap.executions.length});
 })().catch(e=>r.status(503).json({error:e instanceof Error?e.message:'IBKR 同步失败，本地数据未修改'}));});
 
 const groupSchema=z.object({name:text,strategyId:strategySchema.default('custom'),positionIds:z.array(z.number().int().positive()).min(2).max(64)}).refine(v=>new Set(v.positionIds).size===v.positionIds.length);
@@ -253,22 +283,24 @@ holdingsRouter.post('/classification',(q,r)=>{
 
 let refreshing=false;
 holdingsRouter.post('/refresh-prices',(q,r)=>{void(async()=>{
- const p=z.object({accountId:z.number().int().positive().optional()}).safeParse(q.body);
+ const p=z.object({accountId:z.number().int().positive().optional(),fundOnly:z.boolean().optional()}).safeParse(q.body);
  if(!p.success){r.status(400).json({error:'账户筛选无效'});return;}
  if(refreshing){r.status(409).json({error:'正在刷新报价，请稍候'});return;}
  refreshing=true;
  try {
   const rows=store.list().holdings.filter(h=>h.active&&(!p.data.accountId||h.accountId===p.data.accountId));
   const legs=rows.flatMap(h=>h.legs);
-  const quotes:any[]=[];
-  for(let i=0;i<legs.length;i+=20){
-   try{quotes.push(...await quoteHoldings(legs.slice(i,i+20)) as any[]);}
-   catch(e){quotes.push(...legs.slice(i,i+20).map(()=>({error:e instanceof Error?e.message:'报价失败'})));}
+  const targets=legs.map((leg,index)=>({leg,index})).filter(({leg})=>!p.data.fundOnly||leg.assetType==='FUND');
+  const quotes:any[]=new Array(legs.length).fill(null);
+  for(let i=0;i<targets.length;i+=20){
+   const batch=targets.slice(i,i+20);
+   try{const result=await quoteHoldings(batch.map(({leg})=>leg));batch.forEach(({index},j)=>{quotes[index]=result[j];});}
+   catch(e){batch.forEach(({index})=>{quotes[index]={error:e instanceof Error?e.message:'报价失败'};});}
   }
   let offset=0,updated=0;
   for(const row of rows){updated+=store.applyPrices(row,quotes.slice(offset,offset+row.legs.length));offset+=row.legs.length;}
-  const details=[...new Set(quotes.flatMap((v,i)=>v.error?[`${legs[i].symbol}：${v.error}`]:[]))];
-  r.json({updated,skipped:legs.length-updated,details:details.slice(0,8),fetchedAt:new Date().toISOString()});
+  const details=[...new Set(quotes.flatMap((v,i)=>v?.error?[`${legs[i].symbol}：${v.error}`]:[]))];
+  r.json({updated,skipped:targets.length-updated,details:details.slice(0,8),fetchedAt:new Date().toISOString()});
  } finally {refreshing=false;}
 })().catch(e=>r.status(503).json({error:e instanceof Error?e.message:'刷新失败'}));});
 

@@ -71,7 +71,7 @@ export default function HoldingsPositions({rows,groups,accounts,onEdit,onStatus,
  </div>;
 }
 
-function PositionNote({position,index}:{position:Position;index:number}){
+export function PositionNote({position,index}:{position:Position;index:number}){
  const leg=position.legs[index];const title=assetLabel(leg);const notes=leg.notes??(position.legs.length===1?position.notes:'');
  const [open,setOpen]=useState(false);
  const [draft,setDraft]=useState<string|null>(null);

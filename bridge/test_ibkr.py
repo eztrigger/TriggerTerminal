@@ -85,4 +85,43 @@ class HistoryTests(unittest.IsolatedAsyncioTestCase):
             await r.history({'symbol':'AAPL','range':'invalid'})
         r.ensure_connected.assert_not_awaited()
 
+class ExecutionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_raw_unset_preserved_and_execution_scope(self):
+        from datetime import datetime, timezone
+        from ib_async import CommissionReport
+        from ibkr import execution_row
+        r=Reader()
+        r.ib.wrapper.commissionReport(CommissionReport(execId='opening',commission=1,currency='USD',realizedPNL=1.7976931348623157e308))
+        self.assertIsNone(r.reports['opening']['realizedPnl'])
+        r.ib.wrapper.commissionReport(CommissionReport(execId='closing',commission=.1,currency='USD',realizedPNL=-50))
+        self.assertEqual(r.reports['closing']['realizedPnl'],-50)
+        c=NS(conId=12,symbol='CLS',localSymbol='CLS P380',secType='OPT',currency='USD',lastTradeDateOrContractMonth='20261009',right='P',strike=380,multiplier='100')
+        e=NS(execId='closing',acctNumber='U1',time=datetime(2026,10,8,16,tzinfo=timezone.utc),side='BOT',shares=1,price=26)
+        f=NS(contract=c,execution=e)
+        r.ib=NS(reqExecutionsAsync=AsyncMock(return_value=[f]),fills=lambda:[])
+        rows=await r.executions('U1')
+        self.assertEqual(rows[0]['realizedPnl'],-50)
+        self.assertEqual(rows[0]['commission'],.1)
+        self.assertEqual(rows[0]['quantity'],1)
+        self.assertIsNone(execution_row(f)['realizedPnl'])
+        self.assertEqual(await r.executions('U2'),[])
+
 if __name__=='__main__':unittest.main()
+
+class ConnectionCompatibilityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_gateway_and_tws_ports_remain_read_only(self):
+        from unittest.mock import Mock
+        for port in (4001, 4002, 7496, 7497):
+            r = Reader()
+            r.ib = NS(isConnected=lambda: False, disconnect=Mock(), connectAsync=AsyncMock())
+            await r.ensure_connected({'port': port, 'clientId': 801})
+            args = r.ib.connectAsync.call_args
+            self.assertEqual(args.args, ('127.0.0.1', port))
+            self.assertTrue(args.kwargs['readonly'])
+            self.assertEqual(args.kwargs['clientId'], 801)
+
+    async def test_invalid_connection_is_rejected(self):
+        r = Reader()
+        for port in (0, 65536, '7496'):
+            with self.assertRaises(ValueError):
+                await r.ensure_connected({'port': port, 'clientId': 801})

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - All You Need Is Wheel{% endblock %}
+
+{% block extra_head %}
+<!-- Bootstrap Icons CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<!-- Include page header -->
+{% with 
+  title="Dashboard",
+  subtitle="Overview of your portfolio and trading activity"
+%}
+  {% include "partials/components/page_header.html" %}
+{% endwith %}
+
+<!-- Include modular template sections -->
+{% include "partials/dashboard/account_summary.html" %}
+{% include "partials/dashboard/options_table.html" %}
+{% include "partials/dashboard/pending_orders.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Import modular JavaScript files with ES modules -->
+<script type="module" src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"></script>
+{% endblock %} 

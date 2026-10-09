@@ -10,6 +10,7 @@ export type WidgetType =
   | "watchlist"
   | "news"
   | "screener"
+  | "crypto"
   | "macro"
   | "options"
   | "portfolio"
@@ -68,6 +69,7 @@ const SIZE_BY_TYPE: Record<WidgetType, { w: number; h: number }> = {
   watchlist: { w: 4, h: 7 },
   news: { w: 5, h: 8 },
   screener: { w: 12, h: 9 },
+  crypto: { w: 6, h: 9 },
   macro: { w: 5, h: 7 },
   options: { w: 12, h: 9 },
   portfolio: { w: 7, h: 8 },

@@ -1,6 +1,174 @@
 // Chinese source copy is the stable key. Keep placeholders in the same numbered form.
 import {strategies} from '../../../server/src/strategy-catalog';
 export const english:Record<string,string>=Object.fromEntries(`
+当前	Current
+历史	History
+历史成交	Trade history
+归档持仓快照	Archived position snapshots
+搜索历史记录	Search history
+暂无符合条件的历史记录	No matching history records
+包含手动平仓与已同步的券商成交；券商记录只读，较早历史可能不完整。	Includes manual closes and synced broker executions. Broker records are read-only; earlier history may be incomplete.
+到期位置概率	Expiry IN / OUT probability
+现价	Spot
+已同步可获取的成交及已实现盈亏。	Available executions and realized P&L synced.
+成交回报暂不可用，保留已同步盈亏，请稍后重试。	Execution reports unavailable; previously synced P&L retained. Retry later.
+同步当前仓位、现金及可获取的成交盈亏。成交按编号去重并保存在本地；较早成交可能超出 Gateway 的查询范围。策略自动识别，可手动修改。	Sync positions, cash and available execution P&L. Executions are deduplicated by ID and stored locally; earlier trades may fall outside Gateway history. Strategies are detected automatically and can be edited.
+IBKR 成交	IBKR execution
+券商回报	Broker report
+券商盈亏回报待补齐	Broker P&L report pending
+已计入已同步的 IBKR 成交盈亏，较早历史可能不完整	Includes synced IBKR execution P&L; earlier history may be incomplete
+价内概率	ITM probability
+到期价内	Expiry ITM
+到期价内概率，不是提前触及或实际指派概率	Probability of finishing in the money at expiry, not touching the strike or actual assignment
+按持仓成本计算整笔交易；从当前继续持有以当前估值为起点计算未来增量盈亏。	Cost basis measures the whole trade; holding from now measures incremental future P&L from the current mark.
+恢复自动识别	Restore auto-detection
+
+修改策略	Edit strategy
+手动修正	Manual override
+分析	Analysis
+
+WebSocket 已连接 · 后台更新	WebSocket connected · Updating in background
+正在重连 · 保留上次数据	Reconnecting · Keeping the last snapshot
+最近快照	Latest snapshot
+
+仓位与分析	Positions & Analysis
+原持仓分组	Original position group
+仓位备注	Position notes
+操作失败，请重试	Action failed. Please retry.
+
+基础评分	Fundamental score
+评分读取失败	Score unavailable
+
+组合概率使用近月最接近现价的持有合约 IV；Calendar 远月估值使用各腿 IV，手动 IV 覆盖组合内各腿。下方单腿分析独立使用持仓成本与各自假设。	Strategy probabilities use the nearest-to-spot held front-expiry IV. Calendar valuation uses each leg’s IV; a manual IV overrides all legs in the combination. Individual leg analysis below uses its own assumptions and opening cost.
+
+盈利	Profit
+
+盈利概率	Profit probability
+未盈利	No profit
+盈利概率按到期净收益大于零计算，包含持仓成本；买卖方向影响结果，价内不等于盈利。不含额外手续费与税费。	Probability of positive expiry P&L including position cost; long and short positions differ. ITM does not imply profit. Excludes additional fees and taxes.
+近月到期平仓盈利概率	Profit probability at near-expiry exit
+Calendar 概率按近月到期时平掉整个组合估算；远月按各腿当前 IV 不变、剩余期限与当时股价估值。采用欧式模型近似，不含提前行权、滑点和额外费用。	Calendar probability assumes closing the entire position at the nearest expiry. Later legs retain time value using unchanged current leg IVs and the terminal stock price. European-model approximation; excludes early exercise, slippage and additional fees.
+到期仅卖出腿价内	Only short leg ITM at expiry
+到期仅买入腿价内	Only long leg ITM at expiry
+到期两腿均价内	Both legs ITM at expiry
+到期两腿均价外	Neither leg ITM at expiry
+按同一到期股价联合计算；仅卖出腿价内时可能产生单边交割。价内概率不是实际指派概率，未包含提前行权及到期后价格变动。	Joint probabilities at the same terminal stock price. A short-only ITM outcome may cause one-sided delivery. ITM is not actual assignment probability; early exercise and post-expiry moves are excluded.
+
+股息率来源	Dividend yield source
+按公司不派息政策估计为 0	Estimated at 0 under the issuer's no-dividend policy
+按历史股息率估计	Estimated from trailing dividend yield
+按券商股息现值估计	Estimated from broker dividend present value
+
+佣金（本资产）	Commission (this asset)
+获取价格并保存…	Fetching prices and saving…
+逐项佣金必须与资产一一对应，不能同时填写总佣金	Provide one commission per asset without a separate total commission
+填写佣金需要单位成本和乘数	Commission requires unit cost and multiplier
+自动获取价格失败，请稍后重试	Could not retrieve a price. Please try again.
+序号	No.
+整笔组合仅收取一次	Charged once for the entire entry
+＋ 添加资产	+ Add asset
+点击仓位查看基本信息与分析	Click a position to view its information and analysis
+资产 / 账户	Asset / account
+合约乘数	Contract multiplier
+示意范围随价格距离调整	Diagram scale adapts to price distance
+张	contracts
+缺少数据	Missing data
+仓位与策略	Positions & strategies
+全部仓位	All positions
+到期盈亏摘要	Expiry P&L summary
+策略分类可手动调整。覆盖和损失边界由实际合约腿决定；未关联的股票与现金不自动充当担保。	Strategy categories can be adjusted manually. Coverage and loss bounds depend on the actual legs; unlinked stocks and cash do not automatically count as collateral.
+裸卖看涨期权	Naked call
+裸卖看跌期权	Naked put
+策略分类	Strategy categories
+自动识别	Auto-detected
+手动分配	Manual allocation
+添加仓位或组合	Add positions or a combination
+加入 / 移除仓位	Add / remove positions
+自动识别合约结构；卖出看跌不自动视为现金担保。手动分配优先，组合可跨账户。	Contract structures are detected automatically; a short put does not establish cash collateral. Manual allocations take priority. Combinations may span accounts.
+未分配	Unallocated
+被行权概率	Assignment probability
+合约 / 账户	Contract / account
+持仓数量	Quantity
+到期 / 剩余时间	Expiry / time left
+价内 / 价外	ITM / OTM
+持仓盈亏	Position P&L
+查看全部期权仓位，点击一行展开分析。	View all option positions. Click a row to expand its analysis.
+被行权概率按到期时处于价内的模型概率展示，买卖方向不改变此概率；不代表实际指派或提前行权概率。	Assignment probability is the modeled probability of finishing in the money, independent of position side. It is not the probability of actual assignment or early exercise.
+按持仓数量及标准实物交割情景计算；毛额不是保证金，未核验现金、股票覆盖或组合抵扣。	Uses the full position and standard physical delivery. Gross cash is not margin; cash, share coverage and portfolio offsets are unverified.
+按持仓数量计算，未计佣金、滑点和盘口深度；报价不保证成交。未平仓量通常非实时。	Uses the full position, excluding commissions, slippage and market depth. Quotes do not guarantee execution. Open interest is generally not real time.
+到期前触及行权价	Touch strike before expiry
+从当前价格起算	Starting from the current price
+指派与资金风险	Assignment & funding risk
+交割规格待确认	Confirm settlement specifications
+价内且临近到期	ITM and nearing expiry
+已价内，留意指派	ITM: watch assignment exposure
+价外仍需留意指派	OTM: assignment remains possible
+接货资金（毛额）	Gross cash to take delivery
+需交付股数	Shares to deliver
+未计覆盖的单腿最大损失	Standalone max loss before coverage
+每股剩余时间价值	Extrinsic value per share
+价内且时间价值不高于 0.05，需重点留意提前指派。	ITM with extrinsic value at or below 0.05: monitor early assignment closely.
+按未分配数量及标准实物交割情景计算；毛额不是保证金，未核验现金、股票覆盖或组合抵扣。	Uses unallocated units and standard physical delivery. Gross cash is not margin; cash, share coverage and portfolio offsets are unverified.
+除息前提前指派风险可能上升；此处尚未核验除息日。	Early assignment risk can rise before ex-dividend dates; the ex-date has not been verified here.
+流动性与平仓成本	Liquidity & closing costs
+买价为零，缺少有效买盘	Zero bid: no positive buying quote
+等待有效双边报价	Awaiting valid two-sided quotes
+买卖价差达到中间价的 20% 以上	Bid-ask spread is at least 20% of midpoint
+按当前盘口估算	Estimated from current quotes
+买卖价差 / 中间价	Bid-ask spread / midpoint
+按 Ask 买回支出	Buy-to-close outlay at Ask
+按 Bid 卖出收入	Sell-to-close proceeds at Bid
+盘口平仓盈亏	Closing P&L at quoted prices
+较中间价多付的价差成本	Spread cost versus midpoint
+成交量 / 未平仓量	Volume / open interest
+按未分配数量计算，未计佣金、滑点和盘口深度；报价不保证成交。未平仓量通常非实时。	Uses unallocated units, excluding fees, slippage and order-book depth. Quotes do not guarantee execution. Open interest is generally not real-time.
+盘口来源	Quote source
+触及概率使用恒定波动率的连续价格模型，从当前价格计算未来首次碰到行权价；已价内时表示回到行权价，不追溯此前是否触及。触及不等于指派。	Touch probability uses a continuous-price, constant-volatility model starting now. For an ITM option it measures returning to the strike, not a past touch. Touching does not imply assignment.
+到期价内 / 价外概率	Probability ITM / OTM at expiry
+项合约	contracts
+标的现价	Underlying price
+隐含波动率	Implied volatility
+已到期	Expired
+小时	h
+分钟	min
+股	shares
+张未分配	unallocated contracts
+部分数量已归组	Partially allocated
+距离到期	Time to expiry
+纽约 16:00 参考截止	Reference: 16:00 New York
+具体截止时间待确认	Exact cutoff unconfirmed
+价内 / 价外距离	Distance ITM / OTM
+价内	ITM
+价外	OTM
+平值	ATM
+按现价计算距离	Distance relative to spot
+等待标的现价	Awaiting underlying price
+现价与行权价位置	Spot relative to strike
+到期价外概率	Probability OTM at expiry
+含手动假设	Includes manual assumptions
+模型估计	Model estimate
+此合约暂不支持概率模型	Probability model unavailable for this contract
+行情读取失败	Market data unavailable
+数据待补充	Missing inputs
+未分配部分盈亏	P&L on unallocated units
+概率依据与补充数据	Probability inputs and assumptions
+到期价内外概率不是盈利概率，也不是到期前触及概率。盈亏平衡价按单位成本计算；未计额外费用。	ITM/OTM at expiry is not the probability of profit or touching the strike before expiry. Breakeven uses unit cost, excluding additional fees.
+倒计时按标准美股期权到期日纽约 16:00 估算，并非券商行权截止时间。	Countdown assumes 16:00 New York on the expiration date for standard US equity options, not the broker's exercise cutoff.
+行情可能延迟	Quotes may be delayed
+策略必须使用同一标的	A strategy must use the same underlying
+先处理未分组期权，优先关注最近到期的合约。	Review unallocated options, starting with the nearest expiry.
+合约范围	Contract scope
+未分策略组	Unallocated
+全部合约	All contracts
+所有期权均已归组，可切换全部合约查看	All options are allocated. Switch to All contracts to view them.
+同标的可跨账户、跨币种归组；不改变持仓或现金，分配数量不能重复。	Group the same underlying across accounts and currencies. Holdings and cash stay unchanged; units cannot be allocated twice.
+跨账户归组仅用于分析，不代表券商认可抵押或保证金抵扣。	Cross-account grouping is for analysis and does not establish broker collateral or margin offsets.
+此策略包含多个币种，以下分别计算，不直接合并盈亏或概率。跨账户归组不代表保证金抵扣。	This strategy spans currencies. Results are calculated separately without adding P&L or probabilities. Cross-account grouping does not establish margin offsets.
+基金代码或币种与官方资料不符，请核对后重试	The fund code or currency does not match the official data. Check and retry.
+官方基金净值缺失或已过期，请手动填写并核对估值日期	The official fund NAV is missing or stale. Enter a price manually and verify its date.
+官方基金净值暂时不可用，请稍后重试或手动填写	The official fund NAV is unavailable. Retry later or enter a price manually.
+此基金暂无可用自动净值，请检查基金代码与行情源	No automatic NAV is available for this fund. Check the fund code and market data source.
+TDB2915 使用 TD 官方每日净值（USD），保存时可自动补取；其他基金若无报价，请手动填写单位估值价。基金份额乘数通常为 1。	TDB2915 uses TD's daily NAV in USD, fetched automatically on save if missing. For other funds without quotes, enter a unit valuation price. The fund unit multiplier is usually 1.
 重新读取 Yahoo Finance	Retry Yahoo Finance
 正在读取 Yahoo Finance 期权链	Loading Yahoo Finance option chain
 可能延迟 · 缓存最长 5 分钟	May be delayed · Cached for up to 5 minutes
@@ -98,9 +266,9 @@ Yahoo 暂无标的参考价，请选择全部行权价	Yahoo has no underlying r
 数据不足	Insufficient data
 仓位与持仓	Positions & Holdings
 交易台	Terminal
-triggerterminal	triggerterminal
+TriggerTerminal	TriggerTerminal
 面板	Panel
-· triggerterminal	· triggerterminal
+· TriggerTerminal	· TriggerTerminal
 正在打开面板…	Opening panel…
 窗口标的代码	Window symbol
 切换标的	Change symbol
@@ -575,7 +743,7 @@ IBKR 账户	IBKR account
 连接设置	Connection settings
 API 端口	API port
 保存并重连	Save & reconnect
-Gateway 常用端口：实盘 4001 / 模拟 4002；TWS：实盘 7496 / 模拟 7497。以 Gateway 设置为准。	Gateway defaults: live 4001 / paper 4002. TWS: live 7496 / paper 7497. Use your configured port.
+Gateway 常用端口：实盘 4001 / 模拟 4002；TWS：实盘 7496 / 模拟 7497。以 Gateway / TWS 的 Socket port 设置为准。	Gateway defaults: live 4001 / paper 4002. TWS: live 7496 / paper 7497. Use your configured port.
 在 Gateway 中完成登录，允许本机 Socket API 连接；可以保持 Read-Only API 开启。无需提供账户密码。	Sign in to Gateway and allow local Socket API connections. Read-Only API may remain enabled. No password is required here.
 同步失败：	Sync failed:
 下方保留上次数据，已过期，不代表当前账户状态。	Previous data is retained and stale; it does not represent the current account state.
@@ -786,6 +954,43 @@ Yahoo Finance 暂无报价	No Yahoo Finance quote
 窗口未能打开，请允许此网站弹出窗口，或使用桌面版交易台。	Could not open window. Allow pop-ups or use the desktop app.
 `.trim().split('\n').map(line=>line.split('\t')));
 Object.assign(english,Object.fromEntries(`
+佣金（本资产）	Commission (this asset)
+获取价格并保存…	Fetching prices and saving…
+逐项佣金必须与资产一一对应，不能同时填写总佣金	Provide one commission per asset without a separate total commission
+填写佣金需要单位成本和乘数	Commission requires unit cost and multiplier
+自动获取价格失败，请稍后重试	Could not retrieve a price. Please try again.
+序号	No.
+整笔组合仅收取一次	Charged once for the entire entry
+＋ 添加资产	+ Add asset
+点击仓位查看基本信息与分析	Click a position to view its information and analysis
+资产 / 账户	Asset / account
+合约乘数	Contract multiplier
+示意范围随价格距离调整	Diagram scale adapts to price distance
+张	contracts
+缺少数据	Missing data
+仓位与策略	Positions & strategies
+全部仓位	All positions
+到期盈亏摘要	Expiry P&L summary
+策略分类可手动调整。覆盖和损失边界由实际合约腿决定；未关联的股票与现金不自动充当担保。	Strategy categories can be adjusted manually. Coverage and loss bounds depend on the actual legs; unlinked stocks and cash do not automatically count as collateral.
+裸卖看涨期权	Naked call
+裸卖看跌期权	Naked put
+策略分类	Strategy categories
+自动识别	Auto-detected
+手动分配	Manual allocation
+添加仓位或组合	Add positions or a combination
+加入 / 移除仓位	Add / remove positions
+自动识别合约结构；卖出看跌不自动视为现金担保。手动分配优先，组合可跨账户。	Contract structures are detected automatically; a short put does not establish cash collateral. Manual allocations take priority. Combinations may span accounts.
+未分配	Unallocated
+被行权概率	Assignment probability
+合约 / 账户	Contract / account
+持仓数量	Quantity
+到期 / 剩余时间	Expiry / time left
+价内 / 价外	ITM / OTM
+持仓盈亏	Position P&L
+查看全部期权仓位，点击一行展开分析。	View all option positions. Click a row to expand its analysis.
+被行权概率按到期时处于价内的模型概率展示，买卖方向不改变此概率；不代表实际指派或提前行权概率。	Assignment probability is the modeled probability of finishing in the money, independent of position side. It is not the probability of actual assignment or early exercise.
+按持仓数量及标准实物交割情景计算；毛额不是保证金，未核验现金、股票覆盖或组合抵扣。	Uses the full position and standard physical delivery. Gross cash is not margin; cash, share coverage and portfolio offsets are unverified.
+按持仓数量计算，未计佣金、滑点和盘口深度；报价不保证成交。未平仓量通常非实时。	Uses the full position, excluding commissions, slippage and market depth. Quotes do not guarantee execution. Open interest is generally not real time.
 服务重启中断了扫描，请重新启动	Service restart interrupted the scan; start it again
 请检查账户数字、时间及持仓格式	Check account numbers, timestamps and position formats
 含非USD持仓，须换算并补齐。	Non-USD positions require conversion and completion.
@@ -1159,6 +1364,43 @@ Object.assign(english,Object.fromEntries(strategies.map(s=>[s.zh,s.en])),{
  '蝶式与秃鹰':'Butterfly & condor','日历与对角':'Calendar & diagonal','比例策略':'Ratio spreads','合成与套利':'Synthetic & arbitrage',
 });
 Object.assign(english,Object.fromEntries(`
+佣金（本资产）	Commission (this asset)
+获取价格并保存…	Fetching prices and saving…
+逐项佣金必须与资产一一对应，不能同时填写总佣金	Provide one commission per asset without a separate total commission
+填写佣金需要单位成本和乘数	Commission requires unit cost and multiplier
+自动获取价格失败，请稍后重试	Could not retrieve a price. Please try again.
+序号	No.
+整笔组合仅收取一次	Charged once for the entire entry
+＋ 添加资产	+ Add asset
+点击仓位查看基本信息与分析	Click a position to view its information and analysis
+资产 / 账户	Asset / account
+合约乘数	Contract multiplier
+示意范围随价格距离调整	Diagram scale adapts to price distance
+张	contracts
+缺少数据	Missing data
+仓位与策略	Positions & strategies
+全部仓位	All positions
+到期盈亏摘要	Expiry P&L summary
+策略分类可手动调整。覆盖和损失边界由实际合约腿决定；未关联的股票与现金不自动充当担保。	Strategy categories can be adjusted manually. Coverage and loss bounds depend on the actual legs; unlinked stocks and cash do not automatically count as collateral.
+裸卖看涨期权	Naked call
+裸卖看跌期权	Naked put
+策略分类	Strategy categories
+自动识别	Auto-detected
+手动分配	Manual allocation
+添加仓位或组合	Add positions or a combination
+加入 / 移除仓位	Add / remove positions
+自动识别合约结构；卖出看跌不自动视为现金担保。手动分配优先，组合可跨账户。	Contract structures are detected automatically; a short put does not establish cash collateral. Manual allocations take priority. Combinations may span accounts.
+未分配	Unallocated
+被行权概率	Assignment probability
+合约 / 账户	Contract / account
+持仓数量	Quantity
+到期 / 剩余时间	Expiry / time left
+价内 / 价外	ITM / OTM
+持仓盈亏	Position P&L
+查看全部期权仓位，点击一行展开分析。	View all option positions. Click a row to expand its analysis.
+被行权概率按到期时处于价内的模型概率展示，买卖方向不改变此概率；不代表实际指派或提前行权概率。	Assignment probability is the modeled probability of finishing in the money, independent of position side. It is not the probability of actual assignment or early exercise.
+按持仓数量及标准实物交割情景计算；毛额不是保证金，未核验现金、股票覆盖或组合抵扣。	Uses the full position and standard physical delivery. Gross cash is not margin; cash, share coverage and portfolio offsets are unverified.
+按持仓数量计算，未计佣金、滑点和盘口深度；报价不保证成交。未平仓量通常非实时。	Uses the full position, excluding commissions, slippage and market depth. Quotes do not guarantee execution. Open interest is generally not real time.
 中文	Chinese
 最近成交	Last trade
 最近成交价	Last trade
@@ -1315,3 +1557,303 @@ Object.assign(english, {
  '仓位不存在':'Position not found','账户不存在':'Account not found','钱包不存在':'Wallet not found','请输入大于零的金额':'Enter a positive amount','现金余额不能为负数':'Cash cannot be negative',
  '记录可能已保存，请刷新后检查':'The record may already be saved; refresh to check','代币索引暂不可用，保留上次完整数据':'Token index unavailable; previous complete data retained','数据服务暂不可用，请稍后重试':'Data service temporarily unavailable; retry later',
 });
+Object.assign(english,Object.fromEntries(`
+佣金（本资产）	Commission (this asset)
+获取价格并保存…	Fetching prices and saving…
+逐项佣金必须与资产一一对应，不能同时填写总佣金	Provide one commission per asset without a separate total commission
+填写佣金需要单位成本和乘数	Commission requires unit cost and multiplier
+自动获取价格失败，请稍后重试	Could not retrieve a price. Please try again.
+序号	No.
+整笔组合仅收取一次	Charged once for the entire entry
+＋ 添加资产	+ Add asset
+点击仓位查看基本信息与分析	Click a position to view its information and analysis
+资产 / 账户	Asset / account
+合约乘数	Contract multiplier
+示意范围随价格距离调整	Diagram scale adapts to price distance
+张	contracts
+缺少数据	Missing data
+仓位与策略	Positions & strategies
+全部仓位	All positions
+到期盈亏摘要	Expiry P&L summary
+策略分类可手动调整。覆盖和损失边界由实际合约腿决定；未关联的股票与现金不自动充当担保。	Strategy categories can be adjusted manually. Coverage and loss bounds depend on the actual legs; unlinked stocks and cash do not automatically count as collateral.
+裸卖看涨期权	Naked call
+裸卖看跌期权	Naked put
+策略分类	Strategy categories
+自动识别	Auto-detected
+手动分配	Manual allocation
+添加仓位或组合	Add positions or a combination
+加入 / 移除仓位	Add / remove positions
+自动识别合约结构；卖出看跌不自动视为现金担保。手动分配优先，组合可跨账户。	Contract structures are detected automatically; a short put does not establish cash collateral. Manual allocations take priority. Combinations may span accounts.
+未分配	Unallocated
+被行权概率	Assignment probability
+合约 / 账户	Contract / account
+持仓数量	Quantity
+到期 / 剩余时间	Expiry / time left
+价内 / 价外	ITM / OTM
+持仓盈亏	Position P&L
+查看全部期权仓位，点击一行展开分析。	View all option positions. Click a row to expand its analysis.
+被行权概率按到期时处于价内的模型概率展示，买卖方向不改变此概率；不代表实际指派或提前行权概率。	Assignment probability is the modeled probability of finishing in the money, independent of position side. It is not the probability of actual assignment or early exercise.
+按持仓数量及标准实物交割情景计算；毛额不是保证金，未核验现金、股票覆盖或组合抵扣。	Uses the full position and standard physical delivery. Gross cash is not margin; cash, share coverage and portfolio offsets are unverified.
+按持仓数量计算，未计佣金、滑点和盘口深度；报价不保证成交。未平仓量通常非实时。	Uses the full position, excluding commissions, slippage and market depth. Quotes do not guarantee execution. Open interest is generally not real time.
+现金	Cash
+定存	Term deposits
+盈利质量	Earnings quality
+成长与持续性	Growth & consistency
+财务安全	Financial strength
+走势与可交易性	Trend & liquidity
+股东回报与治理	Shareholder returns & governance
+投入资本回报率	Return on invested capital
+营业利润率	Operating margin
+经营现金流 / 资产	Operating cash flow / assets
+应计利润比	Accrual ratio
+盈利稳定性	Earnings stability
+三年收入复合增长	Three-year revenue CAGR
+每股经营利润增长	Operating profit per share growth
+收入同比增长	Revenue growth
+利润率改善	Margin improvement
+增长连续性	Growth consistency
+盈利收益率	Earnings yield
+自由现金流收益率	Free cash flow yield
+经营现金流 / 企业价值	Operating cash flow / enterprise value
+历史估值位置	Historical valuation percentile
+利息覆盖倍数	Interest coverage
+短期偿债覆盖	Near-term debt coverage
+现金流健康	Cash flow health
+股份稀释	Share dilution
+风险调整动量	Risk-adjusted momentum
+中长期趋势	Medium- and long-term trend
+流动性	Liquidity
+股东回报现金覆盖	Payout cash coverage
+资本配置结果	Capital allocation results
+治理与披露	Governance & disclosure
+无限	Unlimited
+此分类暂无资产	No assets in this category
+仓位分析	Position analysis
+资产分类	Asset categories
+本地持仓 · 分币种展示	Local positions · Currencies kept separate
+管理持仓	Manage positions
+读取失败，请刷新重试	Could not load data. Refresh to retry.
+部分行情未更新，保留上次快照	Some quotes could not refresh; previous snapshots retained
+定存仅展示持仓，不参与评分。利率和到期说明可记录在资产备注中。	Term deposits are listed without scoring. Record rates and maturity details in asset notes.
+待分类资产	Assets awaiting classification
+确认资产类型后归入相应分类，原始持仓记录保留。	Choose the asset category. Original position records are retained.
+待分类	Unclassified
+分析只读取和整理本地仓位，不向券商下单。	Analysis reads and organizes local positions. No broker orders are sent.
+现金仅展示余额，不参与评分。各币种独立列示。	Cash balances are listed without scoring. Each currency is shown separately.
+现金类持仓记录	Cash position records
+期权工作区	Options workspace
+合约先独立管理，再手动归入策略。	Manage individual contracts, then assign them to strategies.
+策略	Strategies
+显示股票以建立覆盖	Include stocks for coverage
+归入策略	Assign to strategy
+暂无期权合约	No option contracts
+未分配数量	Unallocated quantity
+选择合约	Select contract
+编辑策略分配	Edit strategy allocations
+建立策略	Create strategy
+策略名称	Strategy name
+合约已变动，请移除并重新选择	Contract changed. Remove it and select again.
+分配数量	Allocated quantity
+仅归组，不改变持仓或现金。同账户、同标的、同币种，分配数量不能重复。	Grouping leaves positions and cash unchanged. Use the same account, underlying and currency; quantities cannot be allocated twice.
+保存失败，请检查合约与分配数量	Could not save. Check contracts and allocated quantities.
+保存策略	Save strategy
+已选择	Selected
+清除选择	Clear selection
+原有策略分组	Existing position groups
+原有分组保留在持仓页。新的分析策略按合约数量独立分配，请在这里重新归组。	Existing groups remain on the positions page. Create analysis strategies here by allocating contract quantities.
+先选择合约并建立策略	Select contracts and create a strategy first
+编辑分配	Edit allocations
+解除策略	Ungroup strategy
+仅解除分析策略，持仓和现金保留。	Remove only this analysis strategy. Positions and cash are retained.
+确认解除	Confirm ungroup
+需核查	Needs review
+极高	Very high
+中高	Elevated
+中	Moderate
+合约到期或分配与当前持仓不一致	Contracts expired or allocations differ from current positions
+当前结构需要专项模型	This structure needs a specialized model
+存在无限损失敞口	Loss exposure is unlimited
+损失有界，仍有行权与资金风险	Loss is bounded; exercise and funding risks remain
+损失有界，仍有权利金损失风险	Loss is bounded; premium can still be lost
+缺少有效策略腿	No valid strategy legs
+多个标的或币种不能共用到期模型	Different underlyings or currencies cannot share one expiry model
+期货期权需专门模型，暂不输出边界	Futures options require a specialized model; bounds are unavailable
+跨到期日策略需日期与波动率情景，不能给出固定最大盈亏	Different expirations require date and volatility scenarios; fixed profit and loss bounds are unavailable
+合约数据不完整	Contract data is incomplete
+缺少成本或当前估值价	Cost or current valuation is missing
+盈亏口径	P&L basis
+按持仓成本	From position cost
+从当前继续持有	From current value
+结构风险	Structural risk
+最大损失	Maximum loss
+最大盈利	Maximum profit
+到期盈利概率	Probability of profit at expiry
+结构风险不等同于账户风险；未计入未包含在成本中的手续费、融资和税费。最大盈亏假设到期完整持有及同步结算。	Structural risk differs from account risk. Fees not included in cost, financing and taxes are excluded. Bounds assume all legs are held to expiry and settled together.
+策略分配需核查，暂停显示组合结果。请编辑分配。	Allocations need review. Combined results are paused; edit the allocations.
+策略到期盈亏图	Strategy expiry P&L chart
+到期标的价格	Underlying price at expiry
+到期盈亏	Expiry P&L
+盈亏平衡价	Break-even price
+无独立盈亏平衡点	No isolated break-even point
+图示范围不代表最大损失边界	Chart range does not define the maximum loss
+概率假设与行情	Probability assumptions & quotes
+手动波动率	Manual volatility
+期权链隐含波动率	Option-chain implied volatility
+当前标的价格	Current underlying price
+等待行情或手动填写	Waiting for quotes, or enter a value
+年化波动率	Annualized volatility
+无风险利率	Risk-free rate
+连续股息率	Continuous dividend yield
+策略概率共用所选到期日的近价平隐含波动率；单腿价内概率使用各腿 IV。手动 IV 会覆盖各腿。	Strategy probability uses the selected expiry's near-ATM IV. Individual ITM probabilities use each leg's IV. Manual IV overrides all legs.
+利率 4% 和股息率 0% 是可修改假设，不是抓取值。到期时间暂按美股 16:00 纽约时间。	The 4% rate and 0% dividend yield are editable assumptions. Expiry currently assumes 16:00 New York time for US equities.
+概率为风险中性模型估计，不是实际获利频率，也不是提前行权概率。美式行权、离散分红、跳跃和波动率曲面未完整建模。	Probabilities are risk-neutral model estimates, not actual profit frequencies or early-exercise probabilities. American exercise, discrete dividends, jumps and the volatility surface are not fully modeled.
+尚无行情来源	No quote source yet
+正在获取行情…	Loading quotes…
+刷新期权行情	Refresh option quotes
+期权行情读取失败，可输入假设进行估计	Option quotes could not load. Enter assumptions to estimate.
+策略腿	Strategy legs
+到期价内概率	Probability of ITM at expiry
+策略名称是手动分类。覆盖和损失边界由实际合约腿决定；未关联的股票与现金不自动充当担保。	Strategy names are manual labels. Actual legs determine coverage and loss bounds; unlinked stocks and cash do not automatically provide coverage.
+股票 triggerpoints	Stock triggerpoints
+基金评级	Fund ratings
+综合评分草案 · 25 项指标	Composite scoring draft · 25 metrics
+保留外部评级的原始尺度	External ratings retain their original scales
+正在抓取分析…	Loading research…
+抓取分析	Fetch research
+分析数据读取失败，请稍后重试	Research data could not load. Try again later.
+triggerpoints 草案	triggerpoints draft
+评分数据覆盖	Scoring data coverage
+财务报告期	Financial reporting period
+尚未接入完整同业与历史财务数据，当前展示可抓取指标与部分规则分，不生成综合总分。	Complete peer and historical financial data are not connected yet. Available metrics and partial rule scores are shown; a composite score is not generated.
+该行业需要专用评分模板，通用总分暂不适用。	This industry needs a dedicated template. The general composite score does not apply yet.
+待补数据	Data needed
+权重	Weight
+指标	Metric
+抓取值	Fetched value
+规则分	Rule points
+评分方法	Scoring method
+按同业有利百分位计分：单项权重 × clamp((百分位 − 10%) / 80%, 0, 1)。至少 20 家可比公司，关键数据缺失不补零或中性分。	Score by favorable peer percentile: weight × clamp((percentile − 10%) / 80%, 0, 1). At least 20 comparable companies are required. Missing core data receives no fabricated points.
+总覆盖至少 85%，各模块至少 60%，且盈利、现金流、偿债核心数据齐全，才可显示暂估总分。当前算法尚待回测。	A provisional total requires at least 85% coverage, 60% in every module, and complete core earnings, cash-flow and solvency data. The algorithm still needs backtesting.
+公司分数与持仓风险分开。重大财务问题需专项核查；技术指标不重复计分。	Company scores and position risk are separate. Material financial issues require review; technical signals are not counted twice.
+Morningstar 星级	Morningstar star rating
+暂无评级	Not rated
+Morningstar 风险等级	Morningstar risk rating
+低	Low
+偏低	Below average
+中等	Average
+偏高	Above average
+高	High
+星级反映历史风险调整表现，不等于未来收益预测。风险评级保留供应商尺度；评级缺失不自动补分。	Stars reflect historical risk-adjusted performance, not forecast returns. Risk uses the provider's scale; missing ratings are not fabricated.
+供应商部分数据暂不可用，缺失项保持空白。	Some provider data is unavailable; missing fields are left blank.
+获取时间	Fetched at
+获取时间不代表财务或评级生效日期	Fetch time is not the effective date of financials or ratings
+期货基础风险	Futures risk overview
+按价格情景计算，不把保证金当作最大损失。	Calculate price scenarios. Margin does not cap losses.
+选择期货合约	Select futures contract
+名义敞口	Notional exposure
+名义敞口 / 账户权益	Notional / account equity
+保证金占权益	Margin / equity
+保证金与账户权益	Margin & account equity
+本合约总保证金	Total contract margin
+请输入券商最新数据。当前未抓取分合约保证金；币种须与合约一致。	Enter current broker figures. Contract-level margin is not fetched yet; use the contract currency.
+标的变动	Underlying move
+情景价格	Scenario price
+相对当前增量盈亏	Incremental P&L from current price
+线性价格情景不含汇率、逐日结算、手续费或追加保证金。实际亏损可能超过初始保证金。	Linear price scenarios exclude FX, daily settlement, fees and margin calls. Losses may exceed initial margin.
+`.trim().split('\n').map(row=>row.split('\t'))));
+Object.assign(english,{
+ '持有至远月到期的交割路径':'Settlement path through the far expiry',
+ '结算方式':'Settlement type','请选择合约实际结算方式':'Choose the contract settlement type',
+ '标准实物股票交割':'Standard physical share delivery','现金结算':'Cash settlement',
+ '该时点标的价格':'Underlying price at this point',
+ '假设近月短腿在该时点提前被行权':'Assume early assignment of near-term short legs at this point',
+ '勾选提前行权时，第一个时点代表提前行权时点；其标的价格由你填写。仅模拟一次近月短腿行权，其余腿假设价内到期行权。':'With early assignment selected, the first point represents the assignment date and uses your input price. Only one near-term assignment is simulated; remaining legs exercise at expiry if ITM.',
+ '路径情景盈亏':'Path scenario P&L','远月后股票数量':'Shares after far expiry','含期初成本的净现金':'Net cash including initial cost',
+ '交割时点':'Settlement point','提前行权假设':'Early-assignment assumption',
+ '这里展示指定路径的结果，不代表最大盈亏或路径发生概率。未模拟保证金强平、分红、利息、费用与部分指派。跨期概率需行权与波动率路径模型，暂不输出。':'These are specified path results, not maximum bounds or path probabilities. Liquidation, dividends, interest, fees and partial assignments are excluded. Cross-expiry probability requires an exercise and volatility-path model and is not shown yet.'
+});
+Object.assign(english,{'数据币种与持仓不符，未使用该标的数据。请核对交易所和代码。':'Research currency differs from the position. Data was not used; verify the exchange and symbol.'});
+Object.assign(english,{
+ '策略必须使用同账户、同标的和同币种':'A strategy must use the same account, underlying and currency',
+ '分配数量超过当前可用持仓':'Allocated quantity exceeds the available position',
+ '分配数量或方向无效':'Allocation quantity or direction is invalid',
+ '同一合约不能重复分配':'A contract cannot be allocated twice',
+ '合约已变动或身份不唯一，请重新选择':'Contract changed or identity is ambiguous. Select it again.',
+ '持仓已失效，请刷新并重新选择':'Position is no longer active. Refresh and select again.',
+ '请至少选择一张期权合约':'Select at least one option contract',
+ '策略已变动，请刷新重试':'Strategy changed. Refresh and retry.',
+ '请检查账户、标的、币种和数量后重试':'Check the account, underlying, currency and quantity, then retry.'
+});
+Object.assign(english,{'财务报告期较旧，过期字段不用于新评分。':'The reporting period is old. Stale fields are excluded from new scores.'});
+Object.assign(english,{
+ "策略概率使用所选到期日最接近现价的持有合约 IV；各腿使用自己的 IV。手动 IV 会覆盖各腿。": "Strategy probability uses the held contract nearest spot for the selected expiry. Each leg uses its own IV. Manual IV overrides all legs.",
+ "美元利率使用财政部收益率曲线近似；股息率由 IBKR 预期股息现值换算。缺失时需手填，手填值仅为假设。到期时间按美股 16:00 纽约时间。": "USD rates use a Treasury yield-curve proxy; dividend yield is inferred from IBKR expected dividend present value. Missing inputs require manual assumptions. Expiry uses 16:00 New York time.",
+ "手动假设": "Manual assumption",
+ "IBKR 连接不可用": "IBKR connection unavailable",
+ "Yahoo 期权补充不可用": "Yahoo option fallback unavailable",
+ "部分合约缺少 IV": "IV missing for some contracts",
+ "利率来源不可用": "Rate provider unavailable",
+ "缺少有效利率": "Valid rate missing",
+ "缺少预期股息数据": "Expected dividend data missing",
+ "行情时效未知": "Quote timing unknown",
+ "Yahoo 财报或评级不可用": "Yahoo financials or ratings unavailable",
+ "历史行情不可用": "Historical prices unavailable",
+ "SEC 财报不可用": "SEC financials unavailable",
+
+
+});
+
+Object.assign(english,{'数据来源':'Data source','缺少当前报价':'Current quotes missing'});
+
+Object.assign(english,{
+  "流动比率": "Current ratio",
+  "净资产收益率": "Return on equity",
+  "基础版": "Basic",
+  "仅分项": "Component scores only",
+  "尚未满足总分条件": "Total score requirements not met",
+  "暂估总分": "Provisional total",
+  "完整基础分": "Complete basic score",
+  "有效数据权重": "Valid data weight",
+  "评分模板": "Scoring template",
+  "银行经营基础版": "Bank operating basics",
+  "普通公司基础版": "General company basics",
+  "暂不支持该行业": "Industry not supported",
+  "固定规则 · 可逐项复核": "Fixed rules · Auditable components",
+  "固定规则分，不是同业排名、目标价或收益预测；不同模板不可直接比较。": "Fixed-rule score, not a peer ranking, target price or return forecast. Different templates are not directly comparable.",
+  "银行分数仅描述经营、估值与走势，不包含资本充足率、不良贷款和流动性风险，不能作为银行安全评级。": "Bank scores cover operations, valuation and trend only. They exclude capital adequacy, non-performing loans and liquidity risk, and are not bank safety ratings.",
+  "行业未知、非银行金融及房地产暂不生成总分，保留可核对的分项。": "Unknown sectors, non-bank financials and real estate have component scores only.",
+  "总分缺少关键项": "Required components unavailable",
+  "有效数据权重不足 80%，只显示分项。": "Valid data weight is below 80%; component scores only.",
+  "总分计算": "Total calculation",
+  "缺项按零分至满分计算的原始区间": "Original-weight range with missing items at zero to full credit",
+  "关键项": "Required",
+  "指标计算": "Metric calculation",
+  "评分锚点": "Scoring anchors",
+  "区间内线性计分，区间外封顶或保底。": "Linear between anchors; capped outside the range.",
+  "规则计算": "Rule calculation",
+  "披露日期": "Filed",
+  "允许的数据年龄（天）": "Maximum data age (days)",
+  "估值股价须在 7 天以内": "Valuation price must be no older than 7 days",
+  "估值价格日期": "Valuation price date",
+  "核对原始输入": "Audit source inputs",
+  "缺少数据": "Data missing",
+  "缺少报告日期": "Reporting date missing",
+  "数据已过期或日期异常": "Stale data or invalid date",
+  "数据值无效": "Invalid value",
+  "可计分": "Scorable",
+  "营业利润 ÷ 收入": "Operating income / revenue",
+  "本期收入 ÷ 上年同期收入 − 1": "Revenue / prior-year revenue - 1",
+  "经营现金流 ÷ 期初期末平均总资产": "Operating cash flow / average beginning and ending assets",
+  "流动资产 ÷ 流动负债": "Current assets / current liabilities",
+  "1 ÷ 滚动市盈率；或同币种每股收益 ÷ 股价": "1 / trailing P/E; or same-currency EPS / price",
+  "现价高于 MA200、MA50 高于 MA200、MA200 高于 20 个交易日前，各记 1 项": "One check each: price above MA200, MA50 above MA200, MA200 above its value 20 sessions ago",
+  "供应商披露的净资产收益率": "Provider-reported return on equity",
+  "单项按固定锚点线性计分。有效数据权重至少 80%，且所有关键项有效，才显示总分。缺失值不补零，不补中性分。": "Components use fixed linear anchors. A total requires at least 80% valid weight and every required component. Missing values receive neither zero nor neutral credit.",
+  "总分等于已得分除以有效权重再乘 100；覆盖不足 100% 时标为暂估。负利润或负现金流是有效低分，不视为缺失。": "Total = earned points / valid weight × 100. Coverage below 100% is provisional. Negative profits or cash flows are valid low scores, not missing data.",
+  "SEC 年度数据最长 450 天，其他财务数据最长 180 天，行情最长 7 天。日期不明或过期的指标不计分。": "Maximum age: SEC annual data 450 days; other financials 180 days; prices 7 days. Undated or stale metrics are excluded.",
+  "权重和锚点是可复核的产品规则，尚未回测，不是监管标准。": "Weights and anchors are auditable product rules. They are not backtested or regulatory standards."
+});
+
+Object.assign(english,{'尚无分析数据':'No research data yet'});
+
+Object.assign(english,{'请重启交易台以加载新版评分服务':'Restart the terminal to load the updated scoring service'});

@@ -6,11 +6,13 @@ import {execFileSync} from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(join(root, 'scripts/public-release-files.json'), 'utf8'));
-const forbidden = /(^|\/)(data|\.desktop-stage|\.desktop-cache|releases|\.git|node_modules|runtime|\.venv|__pycache__|\.next|\.claude|\.codex)(\/|$)|\.(db|sqlite|log|pyc|png|jpg|zip|tsbuildinfo|icloud-backup)$|(^|\/)\.env($|\.)/i;
-const excludedFeatures = /^(?:server\/src\/(?:csp\/|crypto\/|portfolio-analysis|providers\/(?:binance|coingecko))|web\/(?:app\/(?:csp|crypto-holdings|analysis)\/|components\/(?:CspScreener|CryptoHoldings|PortfolioAnalysis|csp\.css|widgets\/CryptoWidget)|lib\/(?:portfolio-analysis|black-scholes))|bridge\/(?:test_)?csp_worker\.py)/;
+const forbidden = /(^|\/)(data|\.git|node_modules|runtime|\.venv|__pycache__|\.next|\.claude|\.codex)(\/|$)|\.(db|sqlite|log|pyc|png|jpg|zip|tsbuildinfo|icloud-backup)$|(^|\/)\.env($|\.)/i;
+
+const approvedImages = new Set(['desktop/icon.png','web/public/trigger-icon.png','docs/images/options-overview.jpg','docs/images/option-analysis.jpg','docs/images/market-workspace.jpg']);
 
 export function checkPath(path) {
-  if (isAbsolute(path) || path.split('/').includes('..') || forbidden.test(path) || excludedFeatures.test(path)) throw Error('Disallowed release path: '+path);
+  if (approvedImages.has(path)) return;
+  if (isAbsolute(path) || path.split('/').includes('..') || forbidden.test(path)) throw Error('Disallowed release path: '+path);
 }
 export function scanText(path, text, privateValues = []) {
   const checks = [
@@ -45,7 +47,10 @@ export async function createRelease(destination) {
         for (const value of Object.values(row)) if (typeof value === 'string' && value.length >= 4) privateValues.add(value);
       }
       for (const row of db.prepare('SELECT name,notes,legs FROM holding_positions').all()) {
-        const values = [row.name,row.notes,...JSON.parse(row.legs).map(leg=>leg.notes)];
+        const legs = JSON.parse(row.legs);
+        // Asset tickers are public identifiers, not private user-written position names.
+        const assetName = legs.some(leg => row.name === leg.symbol || row.name === leg.localSymbol);
+        const values = [assetName ? null : row.name,row.notes,...legs.map(leg=>leg.notes)];
         for (const value of values) if (typeof value === 'string' && value.length >= 4) privateValues.add(value);
       }
     } finally { db.close(); }
@@ -55,7 +60,7 @@ export async function createRelease(destination) {
   if (!label) throw Error('Cannot identify application title for public branding.');
   const dictionary = readFileSync(join(root, 'web/lib/translations/en.ts'), 'utf8');
   const englishLabel = dictionary.split('\n').find(line=>line.startsWith(label+'\t'))?.split('\t')[1];
-  const replacements = [label, englishLabel].filter(value=>value && value !== 'OpenTerminal');
+  const replacements = [label, englishLabel].filter(value=>value && value !== 'OpenTerminal' && value !== 'TriggerTerminal');
   const files = new Map();
   for (const path of manifest) {
     checkPath(path);
@@ -65,10 +70,11 @@ export async function createRelease(destination) {
       if (lstatSync(cursor).isSymbolicLink()) throw Error('Symbolic link rejected: '+path);
     }
     if (!lstatSync(cursor).isFile()) throw Error('Not a regular file: '+path);
+    if (approvedImages.has(path)) { files.set(path, readFileSync(cursor)); continue; }
     let text = readFileSync(cursor, 'utf8');
     if (text.includes('\0')) throw Error('Binary file rejected: '+path);
     for (const value of replacements) text = text.replaceAll(value, 'triggerterminal');
-    if (path === 'desktop/main.swift') text = text.replaceAll('OpenTerminal', 'triggerterminal');
+    if (path === 'desktop/main.swift') text = text.replaceAll('OpenTerminal', 'TriggerTerminal');
     if (path === 'package.json' || path === 'package-lock.json') {
       const json = JSON.parse(text);
       json.name = 'triggerterminal';

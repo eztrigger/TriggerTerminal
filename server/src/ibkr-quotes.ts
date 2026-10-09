@@ -1,9 +1,10 @@
-import { pythonExecutable } from './python.js';
+import {pythonExecutable} from './python.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import {createQuoteBatcher} from './quote-batcher.js';
 import { dataDir } from './db.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 let child: ChildProcessWithoutNullStreams | undefined;
@@ -37,7 +38,7 @@ for (const signal of ['SIGTERM','SIGINT'] as const) process.once(signal, stop);
 let queue: Promise<unknown> = Promise.resolve();
 let queued = 0;
 const inflight = new Map<string, Promise<unknown>>();
-export function quoteIbkr(legs: unknown[]): Promise<unknown> {
+function readQuotes(legs: unknown[]): Promise<unknown> {
   const cfg = JSON.parse(readFileSync(join(dataDir,'ibkr.json'),'utf8'));
   const key = `${cfg.port}:${cfg.clientId}:${JSON.stringify(legs)}`;
   
@@ -52,4 +53,17 @@ export function quoteIbkr(legs: unknown[]): Promise<unknown> {
   });
   const job = queue.then(run).finally(() => { queued--; inflight.delete(key); });
   queue = job.catch(() => {}); inflight.set(key,job); return job;
+}
+
+const sharedQuotes=createQuoteBatcher<{leg:unknown;config:string},any>(
+ async items=>await readQuotes(items.map(item=>item.leg)) as any[],
+ item=>item.config+':'+JSON.stringify(item.leg));
+export function quoteIbkr(legs:unknown[]):Promise<unknown>{
+ // Ignore position quantity/cost: only contract identity affects a quote.
+ const config=readFileSync(join(dataDir,'ibkr.json'),'utf8');
+ return sharedQuotes(legs.map(value=>{
+  const row=value as Record<string,unknown>;
+  const leg=Object.fromEntries(['conId','symbol','assetType','currency','expiry','right','strike','multiplier','exchange','primaryExchange'].map(k=>[k,row[k]]));
+  return {leg,config};
+ }));
 }

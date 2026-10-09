@@ -113,6 +113,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber)}
 .ledger-modal{padding:24px;border-radius:7px;box-shadow:0 16px 64px #162e3226}
 .ledger-modal-backdrop{background:#172c3659;backdrop-filter:blur(3px)}
 .window-controls details>div,.terminal-layout-menu{border-radius:6px;box-shadow:0 8px 24px #213b3f1a;border-color:var(--border)}
+body .csp-page{background:#f4f6f6;color:var(--text)}
+body .csp-header{background:#fff;border-bottom:1px solid var(--border);padding:18px 24px}
+body .csp-header h1{font-size:19px;letter-spacing:0}
+body .csp-layout{gap:20px;padding:20px 24px}
+body .csp-parameters{background:transparent;border:0;border-right:1px solid var(--border);border-radius:0;padding-right:20px;box-shadow:none}
+body .csp-parameters input,body .csp-parameters select{border-color:var(--border);border-radius:4px}
+body .csp-parameters details{display:block}
+body .csp-summary{gap:16px}
+body .csp-summary>div{border-radius:4px;box-shadow:none}
 @media(min-width:1700px){.terminal-market-clock{flex:0 1 auto;order:0;border:0;padding:0;margin-left:auto}.terminal-market-clock>span:first-child{margin-right:0}.terminal-search{max-width:260px}.terminal-source{margin-left:0}}
 @media(max-width:1100px){.terminal-topbar{gap:8px 12px;padding:8px 12px}.terminal-search-hint{display:none}.terminal-search{max-width:180px}.terminal-source{font-size:10px}.holdings-home .holdings-page-inner{padding:0 18px}.terminal-navigation section+section{margin-top:14px}}
 /* Stronger financial typography without changing the established geometry. */
@@ -127,6 +136,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber)}
 .navigation-action{background:#f3f6f5;border-color:#cbd8d4;color:#264e47}
 .window-menu>div .term-btn{justify-content:space-between;border-color:transparent;box-shadow:none;background:transparent;white-space:nowrap}
 .window-menu>div .term-btn:hover{background:#edf3f0}
+body .csp-runbar button,body .csp-editor>header button,body .csp-subheading button,body .csp-save{min-height:32px;border-radius:5px;font-weight:600;gap:6px;padding:6px 11px}
+body .csp-header nav button,body .csp-segment button,body .csp-detail-tabs button{font-weight:600;border-radius:4px;min-height:30px}
 .window-controls .term-btn,.window-controls select{min-height:32px;font-size:12px}
 .window-controls summary.term-btn{list-style:none}.window-controls summary.term-btn::-webkit-details-marker{display:none}
 .panel-actions button{border:1px solid transparent}.panel-actions button:hover{border-color:#d8e2df}
@@ -146,7 +157,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber)}
 .holding-group-label{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--amber);margin-bottom:3px}
 :root{--text:#182329;--text-dim:#53636b;--muted:#53636b}
 body{font-weight:500;-webkit-font-smoothing:auto}
-.terminal-brand,.holdings-home-header h1{font-weight:700;color:var(--text)}
+.terminal-brand,.holdings-home-header h1,body .csp-header h1{font-weight:700;color:var(--text)}
 .terminal-navigation section button,.terminal-primary-nav .term-btn,input,select{font-weight:500}
 .terminal-navigation h2,.panel-title{font-weight:650;color:#34454e}
 .holdings-workspace .positions-heading h2,.holdings-home .holdings-tab-panel h2{font-weight:700;color:var(--text)}
@@ -165,13 +176,16 @@ body{font-weight:500;-webkit-font-smoothing:auto}
 /* One persistent header; each workspace owns its scrollable content below it. */
 .application-shell{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .application-content{flex:1;min-height:0;min-width:0;overflow:hidden}
-.application-content>.terminal-shell,.application-content>.holdings-page,.application-content>.detached-page{height:100%;min-height:0}
+.application-content>.terminal-shell,.application-content>.holdings-page,.application-content>.csp-page,.application-content>.analysis-page,.application-content>.detached-page{height:100%;min-height:0}
 .application-shell>.terminal-topbar .terminal-brand{flex:0 0 154px}
 .application-shell .terminal-primary-nav{flex-shrink:0;gap:2px}
 .application-shell .terminal-primary-nav .term-btn[aria-current=page]{background:#e5f1ee;color:var(--amber);font-weight:650}
 .application-shell .terminal-primary-nav .term-btn:hover{background:#edf4f2;color:var(--amber)}
 .application-shell>.terminal-topbar{min-height:94px}
 .application-content .holdings-home-header{padding:0;min-height:70px}
+.application-content .csp-header{min-height:70px;padding:14px 28px}
+.application-content .csp-header h1{font-size:19px;font-weight:700}
+.application-content .csp-header>div>span{font-size:10px}
 @media(min-width:1700px){.application-shell>.terminal-topbar{min-height:54px}}
 
 /* Stable action columns and label/control tracks across desktop forms. */

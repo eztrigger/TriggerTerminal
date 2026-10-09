@@ -1,4 +1,4 @@
-import { pythonExecutable } from './python.js';
+import {pythonExecutable} from './python.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { readFileSync } from 'node:fs';

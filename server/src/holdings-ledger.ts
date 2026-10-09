@@ -133,7 +133,7 @@ export function createLedger(db: Database.Database) {
     if(!row.active||economic(row.legs)!==economic(input.expectedLegs))throw new Error('持仓已更新，请刷新后重新确认');
     const legs=JSON.parse(row.legs); const l=legs[input.index];
     if(!l||!l.quantity||input.quantity>Math.abs(l.quantity)||l.avgCost===null||l.multiplier===null)throw new Error('平仓数量、成本或乘数无效');
-    if(!['STK','ETF','FUND','OPT'].includes(l.assetType))throw new Error('该资产暂不支持自动现金记账');
+    if(!['STK','ETF','FUND','OPT','CRYPTO'].includes(l.assetType))throw new Error('该资产暂不支持自动现金记账');
     if(l.assetType==='OPT'&&!Number.isInteger(input.quantity))throw new Error('期权数量必须为整数');
     const signed=Math.sign(l.quantity)*input.quantity;
     const scale=signed*l.multiplier;
@@ -187,7 +187,7 @@ export function createLedger(db: Database.Database) {
     if(new Set(legs.map((l:any)=>l.currency)).size!==1)throw new Error('新增成交请按币种分别录入');
     const cash:Record<string,number>={};
     for(const l of legs) {
-      if(l.avgCost===null||l.multiplier===null||!['STK','ETF','FUND','OPT'].includes(l.assetType))throw new Error('新增成交需要有效成本、乘数和支持的资产类型');
+      if(l.avgCost===null||l.multiplier===null||!['STK','ETF','FUND','OPT','CRYPTO'].includes(l.assetType))throw new Error('新增成交需要有效成本、乘数和支持的资产类型');
       cash[l.currency]=money((cash[l.currency]??0)-l.quantity*l.multiplier*l.avgCost);
     }
     const c=legs[0].currency;cash[c]=money(cash[c]-fee);

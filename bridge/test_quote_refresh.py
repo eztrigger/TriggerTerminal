@@ -40,3 +40,39 @@ class StreamQuoteTest(unittest.TestCase):
         q=quote_row('TEST',Ticker())
         self.assertIsNone(q['price'])
         self.assertIsNone(q['changePercent'])
+
+class AnalysisGreeksTest(unittest.IsolatedAsyncioTestCase):
+    async def test_retains_valid_greeks_when_bid_ask_are_missing(self):
+        from ib_async import Option
+        c = Option('TEST', '20261218', 100, 'P', 'SMART', currency='USD', multiplier='100', conId=123)
+        good = SimpleNamespace(impliedVol=.3, undPrice=101, pvDividend=0, delta=-.4)
+        invalid = SimpleNamespace(impliedVol=-1)
+        ticker = SimpleNamespace(bid=float('nan'), ask=float('nan'), last=float('nan'),
+                                 modelGreeks=invalid, bidGreeks=good, askGreeks=None, lastGreeks=None,
+                                 marketDataType=2, time=None)
+        ib = MagicMock(); ib.qualifyContractsAsync=AsyncMock(return_value=[c]); ib.reqMktData.return_value=ticker
+        reader=SimpleNamespace(ib=ib, ensure_connected=AsyncMock())
+        with patch('ibkr_market_worker.asyncio.sleep',new=AsyncMock()), patch('ibkr_market_worker.clear_quote'):
+            result=await quotes_unique(reader, {'legs':[{'conId':123,'symbol':'TEST','assetType':'OPT','currency':'USD'}]})
+        self.assertIsNone(result[0]['price'])
+        self.assertEqual(result[0]['iv'], .3)
+        self.assertEqual(result[0]['pvDividend'], 0)
+        self.assertEqual(result[0]['conId'], 123)
+        self.assertEqual(result[0]['marketDataType'], 2)
+        ib.cancelMktData.assert_called_with(c)
+
+class FastQuotesTest(unittest.IsolatedAsyncioTestCase):
+    async def test_complete_option_data_returns_without_fixed_sleep(self):
+        from ib_async import Option
+        c = Option('TEST', '20261218', 100, 'P', 'SMART', currency='USD', multiplier='100', conId=123)
+        greek = SimpleNamespace(impliedVol=.3, undPrice=101, pvDividend=0, delta=-.4)
+        ticker = SimpleNamespace(bid=1, ask=2, last=1.5, modelGreeks=greek,
+            bidGreeks=None, askGreeks=None, lastGreeks=None, marketDataType=3, time=None)
+        ib = MagicMock(); ib.qualifyContractsAsync=AsyncMock(return_value=[c]); ib.reqMktData.return_value=ticker
+        reader=SimpleNamespace(ib=ib, ensure_connected=AsyncMock())
+        with patch('ibkr_market_worker.asyncio.sleep',new=AsyncMock()) as sleep, patch('ibkr_market_worker.clear_quote'):
+            result=await quotes_unique(reader, {'legs':[{'conId':123,'symbol':'TEST','assetType':'OPT','currency':'USD'}]})
+        sleep.assert_not_called()
+        self.assertEqual(result[0]['iv'], .3)
+        self.assertEqual(result[0]['price'], 1.5)
+        ib.cancelMktData.assert_called_once_with(c)

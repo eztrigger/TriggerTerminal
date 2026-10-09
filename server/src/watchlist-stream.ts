@@ -1,4 +1,4 @@
-import { pythonExecutable } from './python.js';
+import {pythonExecutable} from './python.js';
 import {Router} from 'express';
 import {randomBytes} from 'node:crypto';
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process';
@@ -13,7 +13,7 @@ import {dataDir} from './db.js';
 import {marketSource} from './market-source.js';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..','..');
 export const symbolsSchema=z.array(z.string().trim().toUpperCase().regex(/^\^?[A-Z0-9.-]{1,24}$/)).max(40);
-export const contractsSchema=z.array(z.object({key:z.string().min(1).max(500),symbol:z.string().min(1).max(100),assetType:z.enum(['STK','ETF','OPT','FUND','FUT','FOP','CASH','OTHER']),currency:z.string().min(1).max(12),conId:z.number().int().positive().optional(),expiry:z.string().max(8),right:z.enum(['C','P','']),strike:z.number().finite().nullable(),multiplier:z.number().finite().positive().nullable(),exchange:z.string().max(40).optional(),primaryExchange:z.string().max(40).optional()})).max(60);
+export const contractsSchema=z.array(z.object({key:z.string().min(1).max(500),symbol:z.string().min(1).max(100),assetType:z.enum(['STK','ETF','OPT','FUND','FUT','FOP','CASH','CRYPTO','OTHER']),currency:z.string().min(1).max(12),conId:z.number().int().positive().optional(),expiry:z.string().max(8),right:z.enum(['C','P','']),strike:z.number().finite().nullable(),multiplier:z.number().finite().positive().nullable(),exchange:z.string().max(40).optional(),primaryExchange:z.string().max(40).optional()})).max(60);
 const tickets=new Map<string,number>();
 export const watchlistRouter=Router();
 watchlistRouter.post('/stream-ticket',(_q,r)=>{
@@ -50,6 +50,7 @@ export function attachWatchlistStream(server:Server){
   },200);
  };
  server.on('upgrade',(req,socket,head)=>{
+  if(new URL(req.url??'/','http://localhost').pathname!=='/ws/watchlist')return;
   if(marketSource.active==='yahoo'){socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');socket.destroy();return;}
   const url=new URL(req.url??'/','http://localhost');
   const token=url.searchParams.get('ticket')??'';

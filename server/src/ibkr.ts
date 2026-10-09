@@ -1,4 +1,4 @@
-import { pythonExecutable } from './python.js';
+import {pythonExecutable} from './python.js';
 import { searchIbkr } from './ibkr-search.js';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -14,6 +14,7 @@ const configPath = join(dataDir, 'ibkr.json');
 const schema = z.object({ port: z.number().int().min(1).max(65535), clientId: z.number().int().min(1).max(999999) }).strict();
 let config = { port: 4001, clientId: 71 };
 if (existsSync(configPath)) config = schema.parse(JSON.parse(readFileSync(configPath, 'utf8')));
+else writeFileSync(configPath, JSON.stringify(config), { mode: 0o600, flag: 'wx' });
 let child: ChildProcessWithoutNullStreams | undefined;
 let sequence = 0;
 let queue: Promise<unknown> = Promise.resolve();
@@ -101,3 +102,5 @@ ibkrRouter.get('/search', async (req,res) => {
   try { res.json(await searchIbkr(q, req.query.fund === '1', req.query.currency === 'CAD' ? 'CAD' : 'USD')); }
   catch (e) { res.status(503).json({error:e instanceof Error ? e.message : 'IBKR 搜索失败'}); }
 });
+
+export const readIbkrResearchHistory = (symbol:string) => request({action:'history',symbol,range:'2Y'});

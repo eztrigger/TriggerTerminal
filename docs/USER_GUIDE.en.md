@@ -1,13 +1,13 @@
-# Using triggerterminal
+# Using TriggerTerminal
 
 For the downloadable Mac or Windows app, start with the [desktop installation guide](../desktop/README.md). You do not need the source installation steps below. Feature instructions in this guide apply to both versions.
 
 
 [中文说明](USER_GUIDE.zh-CN.md) · [Project home](../README.md)
 
-triggerterminal brings market data, option chains and a local holdings ledger into one interface. You can use it to follow prices, keep manual records, or read account snapshots from IB Gateway or Trader Workstation running on your computer.
+TriggerTerminal brings market data, option chains and a local holdings ledger into one interface. You can use it to follow prices, keep manual records, or read account snapshots from IB Gateway or Trader Workstation running on your computer.
 
-Adding a position, recording a close, exercising an option in the ledger, and recording a cash movement are local bookkeeping actions. They do not send orders to a broker. This public edition does not include cryptocurrency features, CSP screening or portfolio analysis.
+Adding a position, recording a close, exercising an option in the ledger, and recording a cash movement are local bookkeeping actions. They do not send orders to a broker. Version 0.1.0 includes portfolio analysis, option strategy analysis and cryptocurrency holdings.
 
 ## Contents
 
@@ -29,7 +29,7 @@ Adding a position, recording a close, exercising an option in the ledger, and re
 
 ## 1. Install and start
 
-The release contains source code. Install its dependencies and build it before starting the app. Commands below use a macOS or Linux shell. The optional native wrapper is for macOS; the native Windows installation paths and startup process have not been verified for this release.
+Desktop installers support Windows x64 and macOS Apple Silicon. The commands below are for users who choose to run from source.
 
 You need Node.js 22 or later and npm. Python 3.11 or later is needed for the optional IBKR bridge. You can start with Yahoo data and manual records without installing that bridge.
 
@@ -116,11 +116,11 @@ Request frequency is not quote freshness. Charts request an update every minute.
 
 ## 4. Connect IBKR
 
-For source installations, install the Python bridge first; desktop installers already include it. Then start and sign in to your own IB Gateway or Trader Workstation. Enter your broker password in the IBKR application, not in triggerterminal.
+For source installations, install the Python bridge first; desktop installers already include it. Then start and sign in to your own IB Gateway or Trader Workstation. Enter your broker password in the IBKR application, not in TriggerTerminal.
 
-Allow local Socket API connections in IBKR. Read-only API access is sufficient. In triggerterminal, open:
+Allow local Socket API connections in IBKR. Read-only API access is sufficient. In TriggerTerminal, open:
 
-**Positions & Holdings → IBKR account & sync → Connection settings**
+**Positions & analysis → Account management → IBKR → Connection settings**
 
 Set the API port to match your IBKR application, choose a Client ID, and save the settings. The interface lists these common port values; use the actual value configured in Gateway or TWS:
 
@@ -175,7 +175,6 @@ The watchlist supports direct symbol entry, selection, column sorting and remova
 | --- | --- |
 | Quote | Price, change, volume and available reference fields |
 | News | Related stories, with links to the original articles |
-| Stock screener | Stock lists with filters and sorting; this is not the removed CSP scanner |
 | Macro | Index proxies, yields and other market context |
 | Calendar | Economic events supplied by the source |
 | Insider trades | Related filing records |
@@ -372,7 +371,9 @@ Back up `data/` and stop the services before updating. After changing the source
 To share a source copy, export to a new destination that does not already exist:
 
 ```sh
-node scripts/public-release.mjs ../triggerterminal-public-new
+node scripts/public-release.mjs ../TriggerTerminal-public-new
 ```
 
 The exporter creates a source folder, ZIP and checksum list from an explicit file manifest, without copying old Git history. Review the result, especially files and notes you add later. Use the [upload checklist](../scripts/release/RELEASE-CHECKLIST.md) before publishing.
+
+For download links and the exact API settings, see [Connect IBKR](../README.en.md#download-and-connect-ibkr).

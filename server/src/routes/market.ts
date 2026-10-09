@@ -8,6 +8,8 @@ import * as nasdaq from "../providers/nasdaq.js";
 import * as fred from "../providers/fred.js";
 import * as ecb from "../providers/ecb.js";
 import * as tradingview from "../providers/tradingview.js";
+import * as coingecko from "../providers/coingecko.js";
+import * as binance from "../providers/binance.js";
 import * as news from "../providers/news.js";
 import * as econcalendar from "../providers/econcalendar.js";
 import * as finra from "../providers/finra.js";
@@ -102,7 +104,8 @@ async function vixHistory(rangeKey: string): Promise<yahoo.Candle[]> {
  * its last-known value instead of failing the whole batch.
  *
  * Fan-out bound: the /quotes route caps `symbols` at 150, so a single call
- * here does at most 300 Nasdaq calls (2 per
+ * here does at most ~150 crypto lookups (only for recognized crypto symbols,
+ * mutually exclusive with the stages below) + up to 300 Nasdaq calls (2 per
  * miss) + 1 batched Yahoo call + up to FALLBACK_PER_SYMBOL_CAP per-symbol
  * Yahoo chart calls + up to FALLBACK_PER_SYMBOL_CAP Stooq calls + 1 batched
  * TradingView call. Repetition beyond that is bounded by marketRouter's
@@ -130,6 +133,15 @@ async function getQuotes(symbols: string[]): Promise<yahoo.Quote[]> {
 
   const fetched = new Map<string, yahoo.Quote>();
   let remaining = missing;
+
+  const cryptoSymbols = remaining.filter((s) => binance.CRYPTO_SYMBOLS.has(s));
+  if (cryptoSymbols.length > 0) {
+    const results = await Promise.allSettled(cryptoSymbols.map((s) => binance.quote(s)));
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") fetched.set(cryptoSymbols[i], r.value);
+    });
+    remaining = remaining.filter((s) => !fetched.has(s));
+  }
 
   const vixSymbols = remaining.filter((s) => isVix(s));
   if (vixSymbols.length > 0) {
@@ -246,6 +258,8 @@ marketRouter.get("/history/:symbol", async (req, res) => {
       const intraday = ["1D", "5D", "1M"].includes(rangeKey);
       result = marketSource.active==='yahoo'
         ? await wrap('Yahoo',yr.interval,()=>yahoo.history(symbol,yr.range,yr.interval))
+        : binance.CRYPTO_SYMBOLS.has(symbol)
+        ? await wrap("Binance", "按所选周期", () => binance.history(symbol, rangeKey))
         : isVix(symbol)
         ? await wrap("FRED", "日线", () => vixHistory(rangeKey))
         : await withFallback<HistoryResult>([
@@ -370,6 +384,48 @@ marketRouter.get("/options/:symbol", async (req, res) => {
           },
         ],
       ])
+    );
+    res.json(data);
+  } catch (err) {
+    fail(req, res, err);
+  }
+});
+
+// ---- crypto ----
+
+marketRouter.get("/crypto", async (req, res) => {
+  try {
+    const data = await cached("crypto:markets", 5_000, () =>
+      withFallback([
+        ["coingecko", () => coingecko.markets(50)],
+        ["binance", () => binance.markets()],
+      ])
+    );
+    res.json(data);
+  } catch (err) {
+    fail(req, res, err);
+  }
+});
+
+marketRouter.get("/crypto/global", async (req, res) => {
+  try {
+    const data = await cached("crypto:global", 120_000, () =>
+      withFallback([["coingecko", () => coingecko.globalStats()]])
+    );
+    res.json(data);
+  } catch (err) {
+    fail(req, res, err);
+  }
+});
+
+marketRouter.get("/crypto/orderbook/:symbol", async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  if (!binance.CRYPTO_SYMBOLS.has(symbol)) {
+    return res.status(400).json({ error: "unsupported crypto symbol" });
+  }
+  try {
+    const data = await cached(`orderbook:${symbol}`, 5_000, () =>
+      withFallback([["binance", () => binance.orderBook(symbol)]])
     );
     res.json(data);
   } catch (err) {

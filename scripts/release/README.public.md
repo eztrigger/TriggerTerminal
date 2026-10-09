@@ -1,169 +1,98 @@
-# triggerterminal
+# TriggerTerminal
 
-桌面安装包支持 Mac（Apple 芯片）及 Windows x64，内置运行环境。安装、数据位置和签名状态见 [桌面版说明](desktop/README.md)。下载入口为 [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases)。没有安装包时可按下面的方法从源码运行。
+[English](README.en.md)
 
-Desktop installers for Mac (Apple silicon) and Windows x64 include the required runtimes. See the [desktop guide](desktop/README.md) for installation, data locations and signing status. Downloads are provided through [GitHub Releases](https://github.com/eztrigger/TriggerTerminal/releases). The source setup below remains available.
+**在本机管理资产，看清期权持仓与策略。**
 
+TriggerTerminal 是一个开源的持仓管理与期权分析工具。不同账户、币种和资产放在同一个界面里，成本、盈亏、到期时间和策略关系一起看。适合管理多个投资账户，也适合持续跟踪单腿期权、价差和多腿组合。
 
-一个在本机运行的行情终端和持仓账本。支持中英文界面、IBKR 只读连接、Yahoo Finance 行情与期权链，以及按账户、币种分开的持仓和资金记录。
+## 数据留在本机，券商连接只读
 
-A local market terminal and holdings ledger with Chinese and English interfaces, read-only IBKR integration, Yahoo Finance quotes and option chains, and account-by-account records in their original currencies.
+账户、持仓和交易记录保存在本机。IBKR 通过本地 Gateway / TWS 连接；应用读取账户和行情，不向券商下单。本地记账不会改变券商账户，API 同步的仓位也不能在应用里手动平仓。
 
-**[中文使用说明](docs/USER_GUIDE.zh-CN.md) · [English user guide](docs/USER_GUIDE.en.md)**
+行情查询仍需联网，会向数据源发送标的或合约信息。应用面向单用户本地运行，本地数据库未加密，应保护电脑和备份。详见[隐私说明](https://github.com/eztrigger/TriggerTerminal/blob/main/docs/PRIVACY.md)。
 
-## 中文
+目前支持 IBKR，后续将陆续推出对更多券商的支持。
 
-### 可以做什么
+## 所有持仓，一处查看
 
-- 把图表、行情、自选、新闻和期权链放在同一交易台，保存布局或打开独立窗口。
-- 在 IBKR 和 Yahoo Finance 两种行情模式之间切换。
-- 手动记录股票、ETF、期权和多腿持仓，填写成本、估值、佣金和资产备注。
-- 按账户、币种记录现金、入出金、平仓、行权与已实现盈亏。
-- 从本机 IB Gateway / TWS 读取账户和持仓快照。
+股票、ETF、基金、期货和期权使用统一的持仓入口，按资产类别、账户和币种查看。支持手动录入与券商同步，当前仓位与历史成交分开管理。
 
-账本里的操作不会向券商下单。本公开版不包含虚拟币、CSP 筛选和持仓分析；普通股票筛选仍保留。
+列表先呈现决策需要的重点，详细分析点击后展开。期权列表把合约、数量、剩余期限、价内价外、盈利概率和持仓盈亏并排显示，避免来回切换页面。
 
-### 安装和启动
+![期权持仓总览：合约、到期时间、盈利概率、IN / OUT 和盈亏](docs/images/options-overview.jpg)
 
-以下命令适用于 macOS / Linux。需要 Node.js 22 或更高版本和 npm。进入源码根目录后运行：
+*期权持仓总览。截图使用独立示例账户，不含真实账户资料。*
 
-```sh
-npm ci
-npm run build
-```
+## 期权分析：把价格、概率和风险放在一起
 
-然后在两个终端中分别启动：
+**盈利概率与价内概率分开看。** 盈利概率按持仓成本判断是否赚钱；IN / OUT 表示到期时处于价内或价外的模型概率。卖出期权即使到期价内，也可能因为已收取权利金而盈利，两者不能混用。
 
-```sh
-# 终端一：后台
-npm run start -w server
-```
+**价格位置直接画出来。** 现价与行权价放在同一条示意轴上，配合到期倒计时，快速看清离行权价还有多远。盈利概率用独立图示展示；红绿颜色结合买卖方向表达价内、价外的含义。
 
-```sh
-# 终端二：网页
-npm run start -w web -- --hostname 127.0.0.1
-```
+**展开后再看细节。** 成本、估值、市值、最大盈利、最大损失和盈亏平衡价集中呈现；指派资金需求、剩余时间价值、买卖价差和盘口平仓估算用于进一步检查风险。
 
-打开 [http://localhost:3000](http://localhost:3000)。使用期间保留两个终端，停止时分别按 `Ctrl+C`。
+![期权详情：到期倒计时、价格位置、盈利概率与指派资金风险](docs/images/option-analysis.jpg)
 
-需要 IBKR 时，再用 Python 3.11 或更高版本安装桥接环境：
+*单腿卖出看跌期权示例。盈利概率与到期 IN / OUT 分别展示。*
 
-```sh
-python3 -m venv bridge/.venv
-bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
-```
+### 从单腿到多腿策略
 
-没有 IBKR 也可以使用 Yahoo 图表、期权链和手动账本。**选择 Yahoo 后要重启服务，刷新网页不会让新的行情源配置生效。** 当前的代码搜索仍依赖 IBKR；没有连接时可以直接在自选中输入代码，或修改面板标题旁的代码。
+系统自动识别持仓策略，也允许手动调整。同一标的可以跨账户组合分析；归组不会改变真实账户中的仓位，也不代表券商认可跨账户的抵押或保证金抵扣。
 
-完整步骤、界面操作和常见报错见[中文使用说明](docs/USER_GUIDE.zh-CN.md)。Mac 和 Windows 安装包单独发布，见[桌面版说明](desktop/README.md)。
+- **单腿期权**：按实际持仓成本计算盈利概率与盈亏平衡价。
+- **价差组合**：分析整个组合的到期盈亏，同时逐腿显示价内概率，并区分两腿价外、仅一腿价内和两腿价内的到期情形。
+- **Calendar**：按近月到期时平掉整个组合估算，远月腿保留剩余时间价值，使用当前隐含波动率估值。
 
-### 首次使用与数据
+概率使用现价、行权价、剩余期限、隐含波动率、利率与股息假设计算，是模型估计，不是历史胜率，也不是实际提前指派概率。Calendar 对波动率假设尤其敏感；行情或必要参数不足时，不应把缺失值理解为零。
 
-新安装的个人账户、持仓、现金和交易记录为空。默认图表和自选中的代码是通用示例，旧版账本里的 `Main` 是空容器，不含作者的记录。
+## 行情工作区
 
-源码版的账户与账本数据保存在本机 `data/`；桌面版可从应用菜单打开数据文件夹。布局、自选和语言偏好保存在浏览器或桌面应用中。备份前先停止服务，再复制整个 `data/`。不要把这个目录上传到 GitHub。
+图表、行情报价、自选列表与新闻可以放在同一工作区，按自己的阅读习惯组织。查看标的走势时，可以同时对照报价与相关新闻，减少窗口切换。
 
-这是单用户的本机应用。不要把它当作有用户登录与权限隔离的公共网站部署，也不要把账户数据放到 GitHub Pages。行情和新闻仍会连接外部来源。详见[隐私说明](docs/PRIVACY.md)。
+![行情工作区：价格图表、报价、自选列表与财经内容](docs/images/market-workspace.jpg)
 
-## English
+*当前运行中的工作区示例。*
 
-### What it does
+## 数据从哪里来
 
-- Arrange charts, quotes, watchlists, news and option chains in one workspace, with saved layouts and detached windows.
-- Switch between IBKR and Yahoo Finance market-data modes.
-- Record stocks, ETFs, options and multiple-leg positions, including costs, valuations, commissions and asset notes.
-- Keep cash, deposits, withdrawals, closes, exercise and realized P&L by account and currency.
-- Read account and position snapshots from a local IB Gateway / TWS session.
-
-Ledger actions do not send orders to a broker. This public edition excludes cryptocurrency features, CSP screening and portfolio analysis. The ordinary stock screener remains available.
-
-### Install and start
-
-The commands below use a macOS / Linux shell. Install Node.js 22 or later and npm, then run these commands from the source root:
-
-```sh
-npm ci
-npm run build
-```
-
-Start the services in separate terminals:
-
-```sh
-# Terminal one: API
-npm run start -w server
-```
-
-```sh
-# Terminal two: web app
-npm run start -w web -- --hostname 127.0.0.1
-```
-
-Open [http://localhost:3000](http://localhost:3000). Keep both terminals running while using the app. Stop each process with `Ctrl+C`.
-
-For IBKR, install the bridge using Python 3.11 or later:
-
-```sh
-python3 -m venv bridge/.venv
-bridge/.venv/bin/python -m pip install -r bridge/requirements.txt
-```
-
-Yahoo charts, option chains and manual bookkeeping can be used without IBKR. **Restart the services after selecting Yahoo; refreshing the browser does not activate a saved source change.** Symbol search still uses IBKR. Without it, enter a symbol directly in the watchlist or edit a panel's symbol.
-
-See the [English user guide](docs/USER_GUIDE.en.md) for the full setup, daily use and troubleshooting. Prebuilt Mac and Windows installers are distributed separately; see the [desktop guide](desktop/README.md).
-
-### First use and storage
-
-A fresh installation has no personal accounts, positions, cash entries or trades. Initial chart and watchlist symbols are general examples. The legacy `Main` container is empty and contains no author records.
-
-After you use the app, account and ledger data live in the local `data/` folder. Layouts, watchlists and language preferences live in browser or native-app storage. Stop the services before backing up the entire `data/` folder. Do not upload it to GitHub.
-
-This is a single-user local application, without the user authentication and account isolation needed for a public hosted service. Do not deploy private records to GitHub Pages. Market data and news still contact external providers. See the [privacy document](docs/PRIVACY.md).
-
-## 文档 / Documentation
-
-| 文档 / Document | 内容 / Contents |
+| 数据 | 来源与用途 |
 | --- | --- |
-| [中文使用说明](docs/USER_GUIDE.zh-CN.md) | 安装、行情、期权链、持仓、记账、备份和排错 |
-| [English user guide](docs/USER_GUIDE.en.md) | Setup, market data, options, holdings, bookkeeping, backups and troubleshooting |
-| [账本规则 / Ledger reference](docs/HOLDINGS_LEDGER.md) | 现金与盈亏计算、交割及更正 / Cash, P&L, delivery and corrections |
-| [隐私说明 / Privacy](docs/PRIVACY.md) | 本地存储与外部请求 / Local storage and external requests |
-| [桌面窗口 / macOS wrapper](desktop/README.md) | 可选原生窗口的构建 / Building the optional native wrapper |
-| [上传检查清单 / Upload checklist](scripts/release/RELEASE-CHECKLIST.md) | 发布包的范围与上传前检查 / Release scope and upload checks |
+| 券商账户、持仓与成交 | 本地 IBKR Gateway / TWS；手动账户使用用户录入的账本记录。 |
+| 报价、历史价格与期权链 | 支持 IBKR 与 Yahoo Finance，具体路径取决于行情源和资产类型。期权分析优先使用 IBKR；符合条件的标准美元股票期权可由 Yahoo Finance 补充缺失字段。 |
+| 股票基本面与财务数据 | Yahoo Finance 与 SEC EDGAR；财报日期、币种及可用字段会影响分析覆盖度。 |
+| 基金净值 | 已适配的 TD 基金从 TD Asset Management 官方页面读取，校验基金代码、系列币种与净值日期；并非所有基金都已支持。 |
+| 期权模型的利率与股息 | 美元利率参考美国财政部期限利率；股息参考 IBKR、Yahoo Finance 或已核对的发行人资料。 |
+| 新闻 | Yahoo Finance RSS、Google News 聚合及其链接的原始媒体。 |
 
-## 开发与源码导出 / Development and source export
+行情可能是实时、延迟、冻结或最近一次可用数据，取决于市场状态、订阅权限与供应商。不同字段可能来自不同时间和来源；界面提供的来源、时间与缺失状态用于核对，不应把所有数字都当成实时行情。
 
-```sh
-npm test
-npm run build
-node --test scripts/public-release.test.mjs
-```
+## 设计思路
 
-安装 Python 桥接依赖后，可运行桥接测试。After installing the Python bridge dependencies, run its tests with:
+- **先看全局，再展开细节。** 列表保持紧凑，图示突出价格位置与概率，深入分析按需打开。
+- **保留计算依据。** 盈亏始终以持仓成本为基准；组合指标与单腿概率分开，数据不足时显示缺失。
+- **先显示已有数据，再后台更新。** 分析通过 WebSocket 获取更新，复用缓存和正在进行的请求；再次打开时先保留上次快照，新数据到达后再替换，减少白屏等待。
+- **管理与交易分开。** 分析帮助理解持仓，本地操作不替代券商成交。中英文界面使用同一套功能与计算逻辑。
 
-```sh
-bridge/.venv/bin/python -m unittest discover -s bridge -p 'test_*.py'
-```
+## 下载与连接 IBKR
 
-界面改动须同时支持中英文，见 [AGENTS.md](AGENTS.md)。Interface changes must support both languages.
+从 [v0.1.0 发布页](https://github.com/eztrigger/TriggerTerminal/releases/tag/v0.1.0) 下载 Windows x64 安装程序或 macOS 14+ Apple Silicon DMG。安装包自带 Node.js 和 Python，无需另装开发环境。macOS 拖入「应用程序」；Windows 运行安装向导。
 
-导出到一个尚不存在的新目录：Export to a new destination that does not already exist:
+1. 从 [IBKR 官方下载页](https://www.interactivebrokers.com/docs/tws-api/doc/trader-workstation-and-ib-gateway/download-tws-or-ib-gateway) 下载 **IB Gateway** 并登录。也支持 **Trader Workstation（TWS）**，两者使用相同的 Socket API。
+2. Gateway 打开 **Configure → Settings → API → Settings**；TWS 打开 **Global Configuration → API → Settings**。在 TWS 勾选 **Enable ActiveX and Socket Clients**；Gateway 通常默认启用 Socket API。
+3. 保持 **Read-Only API** 勾选，仅允许本机连接。核对 **Socket port**，点击 Apply / OK。
+4. 在 TriggerTerminal 的「仓位与分析 → 账户管理 → IBKR」填写相同端口及未被其他程序占用的 Client ID，读取账户并同步。使用期间保持 Gateway / TWS 登录。
 
-```sh
-node scripts/public-release.mjs ../triggerterminal-public-new
-```
+| 程序 | 实盘默认端口 | 模拟默认端口 |
+| --- | --- | --- |
+| IB Gateway | 4001 | 4002 |
+| TWS | 7496 | 7497 |
 
-导出工具使用源码白名单，生成目录、ZIP 和校验清单，不复制数据库、密钥、运行日志或旧 Git 历史。以后新增文件时，检查并更新 `scripts/public-release-files.json`。只上传导出的目录内容，不要上传自己的运行目录。
+以你的 Socket port 设置为准。行情权限由 IBKR 账户订阅决定；只读连接不会获得额外行情权限。详见 [IBKR 官方 API 配置说明](https://www.interactivebrokers.com/campus/trading-lessons/installing-configuring-tws-for-the-api/)。
 
-The exporter creates a source folder, ZIP and checksum list from an explicit manifest. It excludes databases, keys, runtime logs and old Git history. Review and update `scripts/public-release-files.json` when adding files. Upload the export, not your working installation.
 
-`SOURCE-SHA256SUMS.txt` 记录的是安装和构建之前的源码校验值。It records source checksums before installation and building.
+## 开始使用与参与
 
-## 来源与许可 / Credits and license
+查看[中文使用说明](https://github.com/eztrigger/TriggerTerminal/blob/main/docs/USER_GUIDE.zh-CN.md)。欢迎提交问题、修复和改进建议，尤其是券商接入、数据覆盖与期权分析方面的反馈。
 
-基于 [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal)，主项目使用 MIT 许可证，见 [LICENSE](LICENSE)。改编的 IBKR 代码位于 `bridge/ibkr_market_worker.py`，其 Apache-2.0 许可与来源见 [第三方声明](THIRD_PARTY_NOTICES.md)。上游应用源码不再随项目分发。
-
-Based on [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal). The main project is MIT licensed; see [LICENSE](LICENSE). Adapted IBKR code lives in `bridge/ibkr_market_worker.py`; its Apache-2.0 license and attribution are listed in [Third-party notices](THIRD_PARTY_NOTICES.md). The upstream application source is no longer bundled.
-
-行情数据可能缺失、延迟或受权限限制。账本用于投资记录，不提供投资建议，也不替代券商对账单或税务核算。
-
-Market data can be missing, delayed or permission-limited. The ledger is an investment record, not investment advice, a broker statement or tax accounting.
+基于 [OpenTerminal](https://github.com/ErTasselli/OpenTerminal)，采用 MIT 许可证。第三方代码保留各自的许可与来源说明。

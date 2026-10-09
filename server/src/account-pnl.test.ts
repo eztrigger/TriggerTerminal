@@ -4,6 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {LedgerOverview,LedgerManager,ledgerCash,type LedgerData} from '../../web/components/HoldingsLedger';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import {setLanguage} from '../../web/lib/i18n';
+import ProfitRecords from '../../web/components/ProfitRecords';
 
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('zh-CN');});
 const balance=(currency:string,cash:number,baseline:number,flows:number,startedAt:string)=>({accountId:1,currency,cash,initialCash:baseline,baseline,flows,startedAt});
@@ -12,6 +13,18 @@ function render(data:LedgerData){
  return renderToStaticMarkup(React.createElement(LedgerOverview,{data,rows:[],filter:'1',unavailable:false,compact:true}));
 }
 const base:LedgerData={accounts:[{id:1,broker:'Test',name:'Test',ibkrAccount:null}],balances:[],brokerCash:[],events:[]};
+it('includes broker close reports in cumulative P&L and exposes read-only profit records',()=>{
+ vi.stubGlobal('React',React);setLanguage('en');
+ const events=[['CLS',-1792.0833],['HUT',-371.8337]].map(([symbol,pnl],i)=>({id:-i-1,accountId:1,kind:'IBKR_TRADE',source:'IBKR',at:'2026-10-08T16:55:13Z',asset:{symbol:String(symbol)},cash:{},realized:{USD:Number(pnl)}}));
+ const data={...base,accounts:[{...base.accounts[0],ibkrAccount:'TEST'}],events};
+ const position={id:1,accountId:1,name:'Test',notes:'',source:'IBKR',active:1,updatedAt:'',legs:[{symbol:'TEST',assetType:'STK',quantity:1,multiplier:1,currency:'USD',expiry:'',right:'',strike:null,avgCost:100,marketPrice:200,marketValue:200,unrealizedPnl:100}]};
+ const summary=renderToStaticMarkup(React.createElement(LedgerOverview,{data,rows:[position],filter:'1',unavailable:false,docked:true}));
+ expect(summary).toContain('2,163.92');expect(summary).toContain('2,063.92');
+ const client=new QueryClient();
+ const records=renderToStaticMarkup(React.createElement(QueryClientProvider,{client},React.createElement(ProfitRecords,{data,filter:'1'})));
+ expect(records).toContain('CLS');expect(records).toContain('HUT');expect(records).toContain('1,792.08');expect(records).toContain('371.83');
+ expect(records).not.toContain('aria-label="Edit realized P&amp;L"');expect(records).toContain('Broker report');client.clear();
+});
 it('keeps deleted close settlement visible in cash history without offering undo',()=>{
  vi.stubGlobal('React',React);setLanguage('en');const client=new QueryClient();
  const data={...base,events:[{id:1,accountId:1,kind:'CLOSE',at:'2026-10-01T12:00:00Z',cash:{USD:1099},realized:{USD:0},closedDeleted:true}]};

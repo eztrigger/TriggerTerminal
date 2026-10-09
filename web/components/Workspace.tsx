@@ -12,6 +12,7 @@ import ChartWidget from "./widgets/ChartWidget";
 import WatchlistWidget from "./widgets/WatchlistWidget";
 import NewsWidget from "./widgets/NewsWidget";
 import ScreenerWidget from "./widgets/ScreenerWidget";
+import CryptoWidget from "./widgets/CryptoWidget";
 import MacroWidget from "./widgets/MacroWidget";
 import OptionsWidget from "./widgets/OptionsWidget";
 import PortfolioWidget from "./widgets/PortfolioWidget";
@@ -29,6 +30,7 @@ export function WidgetBody({ widget }: { widget: WidgetInstance }) {
     case "watchlist": return <WatchlistWidget />;
     case "news": return <NewsWidget widget={widget} />;
     case "screener": return <ScreenerWidget />;
+    case "crypto": return <CryptoWidget />;
     case "macro": return <MacroWidget />;
     case "options": return <OptionsWidget widget={widget} />;
     case "portfolio": return <PortfolioWidget />;
@@ -87,7 +89,7 @@ function SymbolTag({ widget, activeSymbol }: { widget: WidgetInstance; activeSym
 
 export const TITLES: Record<string, string> = {
   quote: "行情报价", chart: "价格图表", watchlist: "自选列表", news: "新闻资讯",
-  screener: "股票筛选",
+  screener: "股票筛选", crypto: "加密资产",
   macro: "宏观与指数", options: "期权链", portfolio: "账户与持仓",
   calendar: "财经日历", insider: "内部人交易", tv: "财经直播", recap: "市场综述",
 };

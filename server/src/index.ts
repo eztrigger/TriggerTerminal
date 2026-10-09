@@ -1,4 +1,6 @@
+import {analysisStreamRouter,attachAnalysisStream} from './analysis-stream.js';
 import express from "express";
+import {analysisResearchRouter} from './analysis-research.js';
 import cors from "cors";
 import { marketRouter } from "./routes/market.js";
 import { portfolioRouter } from "./routes/portfolio.js";
@@ -9,8 +11,10 @@ import { rateLimit } from "./rateLimit.js";
 import {marketSourceRouter} from './market-source.js';
 
 import { holdingsRouter } from "./holdings.js";
+import {cryptoRouter} from './crypto/router.js';
 import { optionsRouter } from "./ibkr-options.js";
 import { ibkrRouter } from "./ibkr.js";
+import { cspRouter } from "./csp/router.js";
 
 import {watchlistRouter,attachWatchlistStream} from './watchlist-stream.js';
 const app = express();
@@ -44,6 +48,10 @@ app.use('/api/market-source',requireApiKey,marketSourceRouter);
 app.use("/api", rateLimit({ windowMs: 60_000, max: 240 }), marketRouter);
 // Portfolio data and the paid AI endpoint require a shared secret; see auth.ts.
 app.use("/api/holdings", requireApiKey, holdingsRouter);
+app.use("/api/analysis", requireApiKey, analysisStreamRouter);
+app.use("/api/analysis", requireApiKey, rateLimit({windowMs:60000,max:30}),analysisResearchRouter);
+app.use('/api/crypto-holdings',requireApiKey,rateLimit({windowMs:60000,max:120}),cryptoRouter);
+app.use("/api/csp", requireApiKey, rateLimit({ windowMs: 60_000, max: 120 }), cspRouter);
 app.use("/api/ibkr/options", requireApiKey, rateLimit({ windowMs: 60_000, max: 30 }), optionsRouter);
 app.use("/api/ibkr", requireApiKey, watchlistRouter);
 app.use("/api/ibkr", requireApiKey, rateLimit({ windowMs: 60_000, max: 60 }), ibkrRouter);
@@ -74,3 +82,5 @@ const server=app.listen(PORT, HOST, () => {
 });
 
 attachWatchlistStream(server);
+
+attachAnalysisStream(server);

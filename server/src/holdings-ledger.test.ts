@@ -282,3 +282,29 @@ it('initializes CAD cash and account equity with fractional stock shares without
  s.ledger.correctOpeningCash(id,'CAD',1500.25,1000.25);
  expect(bal(s,id,'CAD').baseline).toBeCloseTo(2117.5339,8);
 });
+
+it('applies each asset commission independently and edits without doubling it',()=>{
+ const {s,id}=setup();
+ const legs=[{...stock,quantity:10},{...stock,symbol:'ABC',quantity:-20}];
+ const input=holdingSchema.parse({accountId:id,name:'XYZ / ABC',legs,legFees:[2,6]});
+ const p=s.save(input);
+ expect(s.list().holdings[0].legs).toMatchObject([{avgCost:80.2,openingCommission:2},{avgCost:79.7,openingCommission:6}]);
+ s.save(input,p);
+ expect(s.list().holdings[0].legs).toMatchObject([{avgCost:80.2,openingCommission:2},{avgCost:79.7,openingCommission:6}]);
+ expect(bal(s,id).cash).toBe(20000);
+ expect(s.ledger.list().events).toHaveLength(0);
+});
+it('deducts asset trade fees exactly once and retains their allocation',()=>{
+ const {s,id}=setup();
+ const input=holdingSchema.parse({accountId:id,name:'XYZ / ABC',legs:[{...stock,quantity:10},{...stock,symbol:'ABC',quantity:20}],legFees:[2,6],entryMode:'TRADE',requestId:randomUUID(),at:new Date().toISOString()});
+ const p=s.save(input);expect(s.save(input)).toBe(p);
+ expect(bal(s,id).cash).toBe(17592);
+ expect(s.ledger.list().events[0].realized.USD).toBe(-8);
+ expect(s.list().holdings[0].legs).toMatchObject([{avgCost:80,tradeCommission:2},{avgCost:80,tradeCommission:6}]);
+});
+it('rejects mismatched or conflicting commissions without changing holdings or balances',()=>{
+ const {s,id}=setup();const before=JSON.stringify(s.list());
+ for(const extra of [{legFees:[]},{legFees:[1],fee:1}])expect(()=>add(s,id,stock,extra)).toThrow('逐项佣金');
+ expect(()=>add(s,id,{...stock,avgCost:null},{legFees:[1]})).toThrow('单位成本');
+ expect(JSON.stringify(s.list())).toBe(before);
+});

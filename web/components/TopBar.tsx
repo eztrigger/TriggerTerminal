@@ -60,7 +60,7 @@ export default function TopBar() {
 
   return (
     <header className="terminal-topbar">
-      <span className="terminal-brand"><ChartNoAxesCombined size={20} strokeWidth={1.8}/>{tr("triggerterminal")}</span>
+      <span className="terminal-brand"><img src="/trigger-icon.png" alt="" width={28} height={28} style={{borderRadius:7,objectFit:"cover"}}/>{tr("TriggerTerminal")}</span>
       <PrimaryNavigation/>
       <div className="terminal-market-clock">
       <span className={market.open ? "up" : "down"}>● {tr(market.label)}</span>

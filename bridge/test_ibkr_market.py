@@ -1,6 +1,7 @@
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import AsyncMock, Mock, patch
+from ib_async import Option
 from ibkr_market_worker import chain, nonnegative, search
 
 class IbkrMarketTests(unittest.IsolatedAsyncioTestCase):
@@ -14,7 +15,33 @@ class IbkrMarketTests(unittest.IsolatedAsyncioTestCase):
         ib=NS(reqMarketDataType=Mock(),qualifyContractsAsync=AsyncMock(side_effect=qualify),
           reqSecDefOptParamsAsync=AsyncMock(return_value=[NS(exchange='SMART',tradingClass='AAPL',multiplier='100',expirations={'20991218'},strikes=list(range(80,121)))]),
           reqMktData=Mock(side_effect=ticker),cancelMktData=Mock())
+        async def details(query):
+            return [NS(contract=Option(query.symbol,query.lastTradeDateOrContractMonth,strike,right,query.exchange,
+                multiplier=query.multiplier,currency='USD',tradingClass=query.tradingClass,conId=i+1))
+                for i,(right,strike) in enumerate((r,s) for r in ('C','P') for s in range(80,121))]
+        ib.reqContractDetailsAsync=AsyncMock(side_effect=details)
         return NS(ensure_connected=AsyncMock(),ib=ib)
+
+    async def test_expiry_specific_strikes_replace_dense_global_union(self):
+        r=self.reader()
+        r.ib.reqSecDefOptParamsAsync.return_value[0].strikes=[99+i/100 for i in range(201)]
+        with patch('ibkr_market_worker.asyncio.sleep',new=AsyncMock()):
+            data=await chain(r,{'symbol':'AAPL','center':100,'count':'10'})
+        self.assertEqual(data['availableStrikes'],list(range(80,121)))
+        self.assertEqual(len(data['options']),20)
+        self.assertEqual(len({o['strike'] for o in data['options']}),10)
+        self.assertTrue(all(o['strike']==int(o['strike']) for o in data['options']))
+        query=r.ib.reqContractDetailsAsync.call_args.args[0]
+        self.assertEqual(query.lastTradeDateOrContractMonth,'20991218')
+        self.assertEqual(query.tradingClass,'AAPL')
+
+    async def test_empty_expiry_does_not_fabricate_global_contracts(self):
+        r=self.reader();r.ib.reqContractDetailsAsync.side_effect=None
+        r.ib.reqContractDetailsAsync.return_value=[]
+        with patch('ibkr_market_worker.asyncio.sleep',new=AsyncMock()):
+            with self.assertRaisesRegex(ValueError,'没有可用合约'):
+                await chain(r,{'symbol':'AAPL'})
+        self.assertEqual(r.ib.qualifyContractsAsync.call_count,1)
 
     async def test_bounded_contracts_missing_quotes_and_cleanup(self):
         r=self.reader()

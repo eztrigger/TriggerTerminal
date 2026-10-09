@@ -1,6 +1,5 @@
 """Option-chain integration adapted from AllYouNeedIsWheel core/connection.py.
-Copyright 2025 Xiao Xiao. Licensed under Apache-2.0.
-See ../THIRD_PARTY_NOTICES.md and ../licenses/Apache-2.0.txt.
+Upstream Apache-2.0; full source/license: ../third_party/AllYouNeedIsWheel.
 Changes: bounded asynchronous reads, delayed/frozen prices, no fabricated quotes,
 no broker order methods. Runs in a separate process from portfolio/history.
 """
@@ -92,17 +91,28 @@ async def chain(reader, req):
         spot_source = f'IBKR 日线收盘（{bars[-1].date}）' if bars else ''
     if not spot or spot <= 0:
         raise ValueError('无法获取标的参考价；请检查 IBKR 行情权限')
-    contracts = []
-    all_strikes = sorted(s for s in chosen.strikes if s > 0)
     center = float(req.get('center') or spot)
     count = str(req.get('count', '10'))
     if count not in ('10', '20', 'all'):
         raise ValueError('显示数量必须为 10、20 或全部')
+    # SecDefOptParams strikes are a union across expiries, not valid pairs.
+    # Resolve this expiry first (especially important for dense BKNG strikes).
+    details = await asyncio.wait_for(ib.reqContractDetailsAsync(Option(stock.symbol,
+        expiry, exchange=chosen.exchange, multiplier=chosen.multiplier,
+        currency='USD', tradingClass=chosen.tradingClass)), 10)
+    valid = {}
+    for detail in details:
+        c = detail.contract
+        if (c.conId and c.symbol == stock.symbol and c.secType == 'OPT'
+                and c.lastTradeDateOrContractMonth == expiry
+                and c.tradingClass == chosen.tradingClass and c.multiplier == chosen.multiplier
+                and c.currency == 'USD' and c.right in ('P', 'C')
+                and number(c.strike) is not None and c.strike > 0):
+            c.exchange = chosen.exchange
+            valid[c.conId] = c
+    all_strikes = sorted({c.strike for c in valid.values()})
     paired = all_strikes if count == 'all' else sorted(sorted(all_strikes, key=lambda s: abs(s-center))[:int(count)])
-    for right in ('P', 'C'):
-        for strike in paired:
-            contracts.append(Option(stock.symbol, expiry, strike, right, chosen.exchange,
-                multiplier=chosen.multiplier, currency='USD', tradingClass=chosen.tradingClass))
+    contracts = sorted((c for c in valid.values() if c.strike in paired), key=lambda c:(c.right,c.strike))
     options = []
     qualified_count = 0
     # Bound subscriptions and qualification requests even for the full chain.
@@ -208,7 +218,23 @@ async def quotes_unique(reader, req):
             pass
     try:
         await asyncio.gather(*(qualify(i, l) for i, l in enumerate(legs)))
-        await asyncio.sleep(5)
+        def ready(entry):
+            _, contract, tick = entry
+            bid, ask = nonnegative(tick.bid), nonnegative(tick.ask)
+            price_ready = (bid is not None and ask is not None and ask >= bid) or nonnegative(tick.last) is not None
+            if contract.secType != 'OPT':
+                return price_ready
+            return price_ready and any(g and number(g.impliedVol) is not None and
+                0 < g.impliedVol <= 5 and number(g.undPrice) is not None and g.undPrice > 0 and
+                nonnegative(g.pvDividend) is not None
+                for g in (tick.modelGreeks, tick.bidGreeks, tick.askGreeks, tick.lastGreeks))
+        async def wait_ready(entries):
+            for _ in range(50):
+                if not entries or all(ready(entry) for entry in entries):
+                    break
+                await asyncio.sleep(.1)
+        await wait_ready(ticks)
+        retried = []
         for j, (i, c, t) in enumerate(ticks):
             if all(nonnegative(v) is None for v in (t.bid, t.ask, t.last)):
                 ib.cancelMktData(c)
@@ -216,16 +242,28 @@ async def quotes_unique(reader, req):
                 t = ib.reqMktData(c, '', False, False)
                 clear_quote(t)
                 ticks[j] = (i, c, t)
-        await asyncio.sleep(5)
+                retried.append(ticks[j])
+        await wait_ready(retried)
         for i, c, t in ticks:
             bid, ask = nonnegative(t.bid), nonnegative(t.ask)
             mid = (bid + ask) / 2 if bid is not None and ask is not None and ask >= bid else None
             price = mid if mid is not None else nonnegative(t.last)
-            if price is not None:
-                results[i] = dict(conId=c.conId, price=price, bid=bid, ask=ask, basis='买卖中间价' if mid is not None else '最近成交价',
-                                  marketDataType=t.marketDataType or None, fetchedAt=stamp())
-            else:
-                results[i] = dict(error='IBKR 未返回可用报价')
+            g = next((g for g in (t.modelGreeks, t.bidGreeks, t.askGreeks, t.lastGreeks)
+                      if g and number(g.impliedVol) is not None and 0 < g.impliedVol <= 5), None)
+            results[i] = dict(conId=c.conId, symbol=c.symbol, currency=c.currency,
+                              expiry=c.lastTradeDateOrContractMonth, right=c.right, strike=c.strike,
+                              multiplier=number(c.multiplier), price=price, bid=bid, ask=ask,
+                              basis='买卖中间价' if mid is not None else '最近成交价',
+                              iv=number(g.impliedVol) if g else None,
+                              underlyingPrice=number(g.undPrice) if g else None,
+                              pvDividend=nonnegative(g.pvDividend) if g else None,
+                              volume=nonnegative(getattr(t, 'volume', None)),
+                              openInterest=nonnegative(getattr(t, 'callOpenInterest' if c.right == 'C' else 'putOpenInterest', None)) if c.secType == 'OPT' else None,
+                              delta=number(g.delta) if g else None,
+                              marketDataType=t.marketDataType or None,
+                              receivedAt=t.time.isoformat() if t.time else None, fetchedAt=stamp())
+            if price is None:
+                results[i]['error'] = 'IBKR 未返回可用报价'
         return results
     finally:
         for _, c, _ in ticks:

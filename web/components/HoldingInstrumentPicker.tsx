@@ -12,7 +12,7 @@ export default function HoldingInstrumentPicker({leg,onPick,onQuote}:{leg:Instru
  useEffect(()=>{const timer=setTimeout(()=>setDebounced(query.trim()),450);return()=>clearTimeout(timer);},[query]);
  const fund=leg.assetType==='FUND';
  const search=useQuery({queryKey:['holding-instrument',debounced,fund,leg.currency],queryFn:()=>apiGet<Match[]>('/api/ibkr/search?'+new URLSearchParams({q:debounced,...(fund?{fund:'1',currency:leg.currency}:{})})),enabled:!!debounced&&debounced===query.trim(),retry:false,refetchOnWindowFocus:false});
- const quote=useMutation({mutationFn:(value:InstrumentLeg)=>apiPost<Quote>('/api/holdings/quote',value),onSuccess:(q,original)=>onQuote(original,{...original,conId:q.conId,marketPrice:q.price,bid:q.bid,ask:q.ask,quoteAt:q.fetchedAt,quoteBasis:q.basis,marketDataType:q.marketDataType,bidAskAt:q.fetchedAt,bidAskType:q.marketDataType})});
+ const quote=useMutation({mutationFn:(value:InstrumentLeg)=>apiPost<Quote>('/api/holdings/quote',value),onSuccess:(q,original)=>onQuote(original,{...original,conId:q.conId,multiplier:original.assetType==='FUND'?(original.multiplier??1):original.multiplier,marketPrice:q.price,bid:q.bid,ask:q.ask,quoteAt:q.fetchedAt,quoteBasis:q.basis,marketDataType:q.marketDataType,bidAskAt:q.fetchedAt,bidAskType:q.marketDataType})});
  const pick=(m:Match)=>{
   const value:InstrumentLeg={...leg,symbol:m.symbol,assetType:m.type==='FUND'?'FUND':leg.assetType==='ETF'?'ETF':'STK',currency:m.currency,conId:m.conId,exchange:m.type==='FUND'?m.exchange||'FUNDSERV':'SMART',primaryExchange:m.type==='FUND'?'':m.exchange,contractName:m.name,multiplier:1,expiry:'',right:'',strike:null,marketPrice:null,marketValue:null,unrealizedPnl:null,bid:null,ask:null,quoteAt:undefined,bidAskAt:undefined};
   onPick(value);setQuery('');setDebounced('');quote.mutate(value);
@@ -22,7 +22,7 @@ export default function HoldingInstrumentPicker({leg,onPick,onQuote}:{leg:Instru
  {tr(debounced===query.trim()&&!!query&&<div className="holding-instrument-results">{tr(search.isFetching?<p>{tr("正在搜索 IBKR…")}</p>:search.error?<p className="down">{tr(search.error.message)}</p>:<>{tr(search.data?.filter(m=>['STK','FUND'].includes(m.type)).map(m=><button type="button" key={m.conId+':'+m.exchange} onClick={()=>pick(m)}><strong>{tr(m.symbol)}</strong><span>{tr(m.name)}</span><small>{tr(m.exchange)} · {tr(m.currency)} · {tr(m.type==='FUND'?'基金':'股票 / ETF')}</small></button>))}{tr(!search.data?.some(m=>['STK','FUND'].includes(m.type))&&<p>{tr("IBKR 未找到匹配合约，请检查代码、币种或资产类型。")}</p>)}</>)}</div>)}</>)}
  <div className="flex gap-2 items-center flex-wrap"><span className="dim">{tr(leg.conId?`${leg.contractName||leg.symbol} · ${leg.primaryExchange||leg.exchange||'IBKR'} · ${leg.currency} · 合约 ${leg.conId}`:'选择搜索结果可锁定具体市场与合约')}</span><button type="button" className="term-btn" disabled={quote.isPending||!leg.symbol} onClick={()=>quote.mutate(leg)}>{tr(quote.isPending?'读取报价…':'获取价格')}</button></div>
  {tr(quote.error&&<p role="alert" className="down">{tr(quote.error.message)}{tr("；保留原报价。")}</p>)}
- {tr(leg.quoteAt&&<p className="dim">Bid {tr(fmt(leg.bid,4))} / Ask {tr(fmt(leg.ask,4))}{tr(" · 估值 ")}{tr(fmt(leg.marketPrice,4))} {tr(leg.currency)}</p>)}
- {tr(fund&&<p className="dim">{tr("普通基金按 IBKR 实际提供的报价读取，可能无盘中 Bid / Ask；未开放给 API 的基金仍可手动记录。")}</p>)}
+ {tr(leg.quoteAt&&<p className="dim">Bid {tr(fmt(leg.bid,4))} / Ask {tr(fmt(leg.ask,4))}{tr(" · 估值 ")}{tr(fmt(leg.marketPrice,4))} {tr(leg.currency)} · {tr(leg.quoteBasis??'')} · {new Date(leg.quoteAt).toLocaleDateString(uiLocale(),{timeZone:'UTC'})}</p>)}
+ {tr(fund&&<p className="dim">{tr("TDB2915 使用 TD 官方每日净值（USD），保存时可自动补取；其他基金若无报价，请手动填写单位估值价。基金份额乘数通常为 1。")}</p>)}
  </div>;
 }

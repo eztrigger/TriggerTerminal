@@ -4,7 +4,7 @@ export type LayoutSnapshot = { widgets: WidgetInstance[]; layout: LayoutItem[]; 
 export type SavedLayout = { id: string; name: string; snapshot: LayoutSnapshot };
 export type LayoutLibrary = { defaultLayout: LayoutSnapshot; saved: SavedLayout[] };
 export const LAYOUT_LIBRARY_KEY = 'openterminal-layout-library-v1';
-const types = new Set(['quote','chart','watchlist','news','screener','macro','options','portfolio','calendar','insider','tv','recap']);
+const types = new Set(['quote','chart','watchlist','news','screener','crypto','macro','options','portfolio','calendar','insider','tv','recap']);
 
 export function snapshot(value: unknown): LayoutSnapshot {
   const v = value as LayoutSnapshot;

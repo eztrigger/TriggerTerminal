@@ -12,7 +12,7 @@ const UA = `OpenTerminal ${process.env.SEC_EDGAR_CONTACT ?? "ertassellireplay@gm
 const parser = new XMLParser({ ignoreAttributes: false });
 
 async function edgarFetch(url: string): Promise<any> {
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
+  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error(`sec edgar ${res.status} for ${url}`);
   return res.json();
 }
@@ -129,4 +129,10 @@ export async function insiderTransactions(symbol: string, filingLimit = 20): Pro
   const filings = await recentForm4Filings(cik, filingLimit);
   const parsed = await mapWithConcurrency(filings, SEC_FETCH_CONCURRENCY, (f) => parseForm4(cik, f).catch(() => []));
   return parsed.flat().sort((a, b) => b.transactionDate.localeCompare(a.transactionDate));
+}
+
+export async function companyFacts(symbol:string):Promise<any>{
+  const cik=await resolveCik(symbol.replaceAll('.', '-'));
+  if(!cik)throw new Error('SEC company not found');
+  return edgarFetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`);
 }

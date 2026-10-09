@@ -52,7 +52,7 @@ export default function IbkrAccountDetails({account, onAccountChange}: {account:
       <div className="flex gap-3 flex-wrap items-center"><label>{tr("API 端口 ")}<input aria-label={tr("API 端口")} type="number" min="1" max="65535" className="w-24" value={conf.port} onChange={e => setDraft({ ...conf, port: Number(e.target.value) })} /></label>
       <label>Client ID <input aria-label="Client ID" type="number" min="1" max="999999" className="w-24" value={conf.clientId} onChange={e => setDraft({ ...conf, clientId: Number(e.target.value) })} /></label>
       <button className="term-btn" disabled={save.isPending}>{tr("保存并重连")}</button></div>
-      <p className="dim">{tr("Gateway 常用端口：实盘 4001 / 模拟 4002；TWS：实盘 7496 / 模拟 7497。以 Gateway 设置为准。")}</p>
+      <p className="dim">{tr("Gateway 常用端口：实盘 4001 / 模拟 4002；TWS：实盘 7496 / 模拟 7497。以 Gateway / TWS 的 Socket port 设置为准。")}</p>
       <p className="dim">{tr("在 Gateway 中完成登录，允许本机 Socket API 连接；可以保持 Read-Only API 开启。无需提供账户密码。")}</p>
       {tr(save.error && <p className="down">{tr(save.error.message)}</p>)}
     </form>)}

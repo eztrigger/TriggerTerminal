@@ -5,7 +5,8 @@ import Providers from "./providers";
 import ApplicationShell from '../components/ApplicationShell';
 
 export const metadata: Metadata = {
-  title: "triggerterminal",
+  title: "TriggerTerminal",
+  icons: { icon: "/trigger-icon.png", apple: "/trigger-icon.png" },
   description: "Bloomberg-style financial terminal on free data sources",
 };
 

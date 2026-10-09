@@ -22,7 +22,7 @@ function external(url) { try { if (['https:', 'http:'].includes(new URL(url).pro
 function menu() {
   const file = { label: L('应用', 'App'), submenu: [
     { label: L('新交易台', 'New terminal'), accelerator: 'CmdOrCtrl+N', click: () => ready && windowAt('/') },
-    { label: L('仓位与持仓', 'Positions & holdings'), accelerator: 'CmdOrCtrl+1', click: () => ready && windowAt('/holdings') },
+    { label: L('仓位与分析', 'Positions & analysis'), accelerator: 'CmdOrCtrl+1', click: () => ready && windowAt('/holdings') },
     { type: 'separator' }, { label: L('打开数据文件夹', 'Open data folder'), click: () => shell.openPath(data) },
     { label: L('重启', 'Restart'), click: restart },
     { type: 'separator' }, { label: L('退出', 'Quit'), accelerator: 'CmdOrCtrl+Q', click: () => app.quit() },

@@ -23,7 +23,7 @@ export default function Terminal() {
           "1": () => addWidget("chart"),
           "2": () => addWidget("quote"),
           "3": () => addWidget("news"),
-          "4": () => addWidget("screener"),
+          "6": () => addWidget("crypto"),
           "7": () => addWidget("options"),
           "8": () => openTradingWindow('/holdings'),
         };

@@ -4,7 +4,7 @@ export type Strategy = {id:string; family:typeof strategyFamilies[number]; en:st
 const family=(category:Strategy['family'], entries:[string,string,string,string[]?][]):Strategy[]=>entries.map(([id,en,zh,aliases])=>({id,en,zh,aliases,family:category}));
 export const strategies:Strategy[]=[
  ...family('Equity',[
- ['long-stock','Long stock','股票多头'],['short-stock','Short stock','股票空头'],['long-call','Long call','买入看涨期权'],['long-put','Long put','买入看跌期权'],['short-call','Naked call','裸卖看涨期权',['short call','uncovered call']],['short-put','Naked put','裸卖看跌期权',['short put','uncovered put']],['leaps-call','LEAPS call','长期看涨期权'],['leaps-put','LEAPS put','长期看跌期权']]),
+ ['long-stock','Long stock','股票多头'],['short-stock','Short stock','股票空头'],['long-call','Long call','买入看涨期权'],['long-put','Long put','买入看跌期权'],['short-call','Short call','卖出看涨期权',['naked call','裸卖看涨期权','uncovered call']],['short-put','Short put','卖出看跌期权',['naked put','裸卖看跌期权','uncovered put']],['leaps-call','LEAPS call','长期看涨期权'],['leaps-put','LEAPS put','长期看跌期权']]),
  ...family('Income & protection',[
  ['cash-secured-put','Cash-secured put','现金担保看跌',['cash secured put','csp']],['covered-call','Covered call','备兑看涨',['buy write','buy-write']],['covered-put','Covered put','备兑看跌'],['protective-put','Protective put','保护性看跌',['married put']],['protective-call','Protective call','保护性看涨'],['collar','Collar','领口策略',['protective collar']],['covered-strangle','Covered strangle','备兑宽跨式',['covered combination']],['cash-backed-call','Cash-backed call','现金支持看涨',['cash secured call']],['wheel','Wheel','轮动收息'],['stock-repair','Stock repair','股票修复',['covered ratio spread']],['pmcc','Poor man’s covered call','长期看涨备兑',['poor mans covered call','poor man covered call','pmcc']]]),
  ...family('Vertical',[

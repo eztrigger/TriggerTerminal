@@ -1,5 +1,5 @@
 """Read-only IB Gateway bridge. JSON lines over private child-process pipes.
-No HTTP listener, no order or execution methods exposed.
+No HTTP listener or order placement methods; execution history is read-only.
 """
 import asyncio
 import json
@@ -7,7 +7,7 @@ import logging
 import math
 import sys
 from datetime import datetime, timezone, date
-from ib_async import IB, StartupFetch, Stock, Index
+from ib_async import IB, StartupFetch, Stock, Index, ExecutionFilter
 
 logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
@@ -40,9 +40,31 @@ def position_row(p, item=None):
         'realizedPnl': number(item.realizedPNL) if item else None,
     }
 
+
+def execution_row(fill, report=None):
+    c, e = fill.contract, fill.execution
+    at = e.time if e.time.tzinfo else e.time.replace(tzinfo=timezone.utc)
+    return {'execId': e.execId, 'account': e.acctNumber, 'at': at.astimezone(timezone.utc).isoformat(),
+        'conId': c.conId, 'symbol': c.symbol, 'localSymbol': c.localSymbol, 'assetType': c.secType,
+        'currency': c.currency, 'side': e.side, 'quantity': number(e.shares), 'price': number(e.price),
+        'expiry': c.lastTradeDateOrContractMonth, 'right': c.right, 'strike': number(c.strike),
+        'multiplier': number(c.multiplier) if c.secType in ('OPT','FOP','FUT') else 1,
+        **(report or {'commission': None, 'reportCurrency': None, 'realizedPnl': None})}
+
 class Reader:
     def __init__(self):
         self.ib = IB()
+        self.reports = {}
+        self.report_ready = asyncio.Event()
+        original_report = self.ib.wrapper.commissionReport
+        def capture_report(report):
+            # ib_async replaces IB's unset realizedPNL with zero. Preserve raw
+            # availability before that normalization; missing is never profit=0.
+            self.reports[report.execId] = {'commission': number(report.commission),
+                'reportCurrency': report.currency or None, 'realizedPnl': number(report.realizedPNL)}
+            self.report_ready.set()
+            original_report(report)
+        self.ib.wrapper.commissionReport = capture_report
         self.connection = None
         self.selected = None
         self.account_updated = {}
@@ -75,6 +97,22 @@ class Reader:
             self.upstream_ok = True
         if not self.upstream_ok:
             raise ConnectionError('Gateway 与 IB 服务器断开，请检查 Gateway 登录及网络状态')
+    async def executions(self, account):
+        fills = await asyncio.wait_for(self.ib.reqExecutionsAsync(ExecutionFilter(acctCode=account)), 5)
+        # Include cached fills so reports delivered after a previous snapshot are
+        # persisted at the next sync, even across the request's date boundary.
+        fills = {f.execution.execId: f for f in [*self.ib.fills(), *fills]
+                 if f.execution.acctNumber == account}
+        deadline = asyncio.get_running_loop().time() + 1
+        while any(key not in self.reports for key in fills):
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0: break
+            self.report_ready.clear()
+            try: await asyncio.wait_for(self.report_ready.wait(), remaining)
+            except asyncio.TimeoutError: break
+        return [execution_row(f, self.reports.get(key)) for key, f in fills.items()
+                if f.contract.secType != 'BAG']
+
     async def snapshot(self, req):
         await self.ensure_connected(req)
         port = req.get('port', 4001)
@@ -105,7 +143,13 @@ class Reader:
             currency = next((v['currency'] for v in fields if v['tag'] == 'NetLiquidation' and v['currency'] not in ('', 'BASE')), None)
         marks = {p.contract.conId: p for p in self.ib.portfolio(account)}
         rows = [position_row(p, marks.get(p.contract.conId)) for p in positions if p.account == account and p.position != 0]
-        return {'connected': True, 'readOnly': True, 'host': '127.0.0.1', 'port': port,
+        try:
+            executions = await self.executions(account)
+            executions_complete = True
+        except Exception:
+            executions = []  # Never erase locally persisted history on failure.
+            executions_complete = False
+        return {'executionsComplete': executions_complete, 'executions': executions, 'connected': True, 'readOnly': True, 'host': '127.0.0.1', 'port': port,
             'accounts': accounts, 'account': account, 'baseCurrency': currency,
             'syncedAt': stamp(), 'accountUpdatedAt': self.account_updated.get(account),
             'portfolioUpdatedAt': self.position_updated.get(account),
@@ -117,7 +161,7 @@ class Reader:
             '1D': ('1 D', '5 mins'), '5D': ('1 W', '15 mins'),
             '1M': ('1 M', '1 hour'), '6M': ('6 M', '1 day'),
             'YTD': ('1 Y', '1 day'), '1Y': ('1 Y', '1 day'),
-            '5Y': ('5 Y', '1 week'), 'MAX': ('20 Y', '1 month'),
+            '2Y': ('2 Y', '1 day'), '5Y': ('5 Y', '1 week'), 'MAX': ('20 Y', '1 month'),
         }
         range_key = req.get('range', '6M')
         if range_key not in ranges or not symbol or len(symbol) > 24:

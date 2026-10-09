@@ -275,3 +275,12 @@ export async function options(symbol: string, date?: number): Promise<any> {
     puts: (chain.puts ?? []).map(pick),
   };
 }
+
+// Source fields retain their original timestamps and units.
+export async function researchSummary(symbol:string):Promise<any>{
+ const modules='price,assetProfile,summaryDetail,defaultKeyStatistics,financialData,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory,fundPerformance,fundProfile';
+ const json=await yfetch('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+encodeURIComponent(symbol)+'?modules='+modules,true);
+ const result=json?.quoteSummary?.result?.[0];
+ if(!result)throw new Error('Yahoo research data unavailable');
+ return result;
+}

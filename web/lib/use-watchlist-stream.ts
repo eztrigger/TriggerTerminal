@@ -4,6 +4,14 @@ import {useMarketSource} from './use-market-source';
 import {apiGet,type Quote,apiPost} from './api';
 export type StreamQuote={symbol:string;price:number|null;bid:number|null;ask:number|null;volume:number|null;changePercent:number|null;marketDataType:number|null;receivedAt:string;basis:string};
 export type StreamContract={key:string;symbol:string;assetType:string;currency:string;conId?:number;expiry:string;right:string;strike:number|null;multiplier:number|null;exchange?:string;primaryExchange?:string};
+const recentQuotes=new Map<string,Record<string,StreamQuote>>();
+let restored=false;
+function restoreQuotes(){
+ if(restored||typeof window==='undefined')return;restored=true;
+ try{const saved=JSON.parse(localStorage.getItem('terminal-stream-snapshot-v1')??'null');if(saved?.at>Date.now()-86400000&&Array.isArray(saved.rows))for(const [key,quotes] of saved.rows)recentQuotes.set(key,quotes);}catch{}
+ window.addEventListener('pagehide',()=>{try{localStorage.setItem('terminal-stream-snapshot-v1',JSON.stringify({at:Date.now(),rows:[...recentQuotes]}));}catch{}});
+}
+
 export function useWatchlistStream(symbols:string[],contracts?:StreamContract[]){
  const [quotes,setQuotes]=useState<Record<string,StreamQuote>>({});
  const [status,setStatus]=useState('正在连接…');const [connected,setConnected]=useState(false);
@@ -13,7 +21,7 @@ export function useWatchlistStream(symbols:string[],contracts?:StreamContract[])
  const source=useMarketSource().data?.active;
  useEffect(()=>{
   let stopped=false;let socket:WebSocket|undefined;let retry:ReturnType<typeof setTimeout>|undefined;let watchdog:ReturnType<typeof setInterval>|undefined;let attempts=0;let lastMessage=Date.now();
-  setQuotes({});setErrors({});setConnected(false);
+  restoreQuotes();const cacheKey=source+':'+key;setQuotes(recentQuotes.get(cacheKey)??{});setErrors({});setConnected(false);
   if(!key||(contractMode&&JSON.parse(key).length===0)){setStatus('添加代码以订阅 IBKR 行情');return;}
   if(!source)return;
   if(source==='yahoo'&&contractMode)return;
@@ -42,9 +50,9 @@ export function useWatchlistStream(symbols:string[],contracts?:StreamContract[])
     socket.onmessage=e=>{
      lastMessage=Date.now();attempts=0;
      try{const msg=JSON.parse(e.data);
-      if(msg.type==='reset'){setQuotes({});setErrors({});}
+      if(msg.type==='reset'){setErrors({});}
       if(msg.type==='status'){setConnected(msg.connected);setStatus(msg.message);}
-      if(msg.type==='quotes'){setQuotes(prev=>{const next={...prev};for(const q of msg.quotes)next[q.symbol]=q;return next;});setErrors(prev=>{const next={...prev};for(const q of msg.quotes)if(q.price!==null)delete next[q.symbol];return next;});}
+      if(msg.type==='quotes'){setQuotes(prev=>{const next={...prev};for(const q of msg.quotes)if(q.price!==null)next[q.symbol]=q;recentQuotes.set(cacheKey,next);if(recentQuotes.size>20)recentQuotes.delete(recentQuotes.keys().next().value!);return next;});setErrors(prev=>{const next={...prev};for(const q of msg.quotes)if(q.price!==null)delete next[q.symbol];return next;});}
       if(msg.type==='quoteError'){if(msg.symbol)setErrors(prev=>({...prev,[msg.symbol]:msg.message}));else setStatus(msg.message);}
      }catch{}
     };

@@ -21,13 +21,13 @@ export function useHoldingsMarket<T extends Position>(holdings:T[]) {
  const [pollError,setPollError]=useState('');
  const serialized=JSON.stringify([...new Map(holdings.filter(h=>h.active).flatMap(h=>h.legs.map(holdingContract)).map(c=>[c.key,c])).values()].sort((a,b)=>a.key.localeCompare(b.key)));
  const contracts=useMemo<StreamContract[]>(()=>JSON.parse(serialized),[serialized]);
- const stream=useWatchlistStream([],source==='api'?contracts:[]);
+ const stream=useWatchlistStream([],source==='api'?contracts.filter(c=>c.assetType!=='FUND'):[]);
  useEffect(()=>{
-  if(source!=='yahoo'||!contracts.length)return;
+  if(!contracts.length||(source!=='yahoo'&&!(source==='api'&&contracts.some(c=>c.assetType==='FUND'))))return;
   let stopped=false;let timer:ReturnType<typeof setTimeout>;
   const poll=async()=>{
    try {
-    const result=await apiPost<{skipped:number;details:string[]}>('/api/holdings/refresh-prices',{});
+    const result=await apiPost<{skipped:number;details:string[]}>('/api/holdings/refresh-prices',source==='api'?{fundOnly:true}:{});
     if(stopped)return;
     setPollError(result.skipped?`${result.skipped} 个资产报价未更新：${result.details.join('；')}`:'');
     await qc.invalidateQueries({queryKey:['holdings']});
@@ -38,5 +38,5 @@ export function useHoldingsMarket<T extends Position>(holdings:T[]) {
  },[source,serialized,qc,contracts.length]);
  const rows=source==='api'?holdings.map(h=>h.active?{...h,legs:h.legs.map(l=>applyHoldingQuote(l,stream.quotes[holdingContract(l).key]))}:h):holdings;
  const errors=Object.entries(stream.errors).map(([key,error])=>`${contracts.find(c=>c.key===key)?.symbol??'资产'}：${error}`);
- return {rows,error:source==='yahoo'?pollError:errors.length?errors.slice(0,3).join('；'):contracts.length&&!stream.connected?stream.status:''};
+ return {rows,error:source==='yahoo'?pollError:[pollError,errors.length?errors.slice(0,3).join('；'):source==='api'&&contracts.some(c=>c.assetType!=='FUND')&&!stream.connected?stream.status:''].filter(Boolean).join('；')};
 }
