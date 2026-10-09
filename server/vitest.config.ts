@@ -1,3 +1,3 @@
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({ test: { setupFiles: ['./test/storage.ts'] } });
+export default defineConfig({ oxc: { jsx: { runtime: 'automatic' } }, test: { setupFiles: ['./test/storage.ts'] } });

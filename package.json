@@ -6,7 +6,8 @@
     "web"
   ],
   "overrides": {
-    "qs": "^6.16.0"
+    "qs": "^6.16.0",
+    "postcss": "^8.5.23"
   },
   "scripts": {
     "dev": "concurrently -n api,web -c yellow,cyan \"npm run dev -w server\" \"npm run dev -w web\"",
@@ -22,7 +23,7 @@
     "concurrently": "^9.1.2",
     "electron": "44.5.1",
     "electron-builder": "26.17.0",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "version": "0.1.0"
 }
