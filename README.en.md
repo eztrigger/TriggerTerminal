@@ -20,9 +20,9 @@ Stocks, ETFs, funds, futures and options share a portfolio view, organized by as
 
 The list shows the essentials first; click a position to expand its analysis. For options, contracts, quantities, time to expiry, moneyness, probability of profit and P&L appear side by side.
 
-![Options overview showing contracts, expiry, probability of profit, IN / OUT and P&L](docs/images/options-overview.jpg)
+![Options overview showing contracts, expiry, probability of profit, IN / OUT and P&L](docs/images/options-overview-en.jpg)
 
-*Options overview in the Chinese interface. Screenshots use a separate demo account, not real account data.*
+*English interface with a separate demo account. No real account data is shown.*
 
 ## Options analysis: price, probability and risk together
 
@@ -32,9 +32,9 @@ The list shows the essentials first; click a position to expand its analysis. Fo
 
 **Open the details when you need them.** Review cost, valuation, market value, maximum profit and loss, and breakeven prices. Assignment funding, remaining time value, bid–ask spreads and estimated closing P&L provide further context.
 
-![Option detail showing expiry countdown, price position, profit probability and assignment funding](docs/images/option-analysis.jpg)
+![Option detail showing expiry countdown, price position, profit probability and assignment funding](docs/images/option-analysis-en.jpg)
 
-*A short put example in the Chinese interface, with profit probability and expiry IN / OUT shown separately.*
+*A short put example, with profit probability and expiry IN / OUT shown separately.*
 
 ### From individual legs to strategies
 
@@ -48,11 +48,13 @@ Probabilities use spot, strike, remaining time, implied volatility, interest rat
 
 ## Market workspace
 
-Keep charts, quotes, watchlists and news in the same workspace, arranged around how you read the market. Review price action alongside quotes and related news with fewer window changes.
+Keep charts, quotes, watchlists, news and financial TV in the same workspace. Place a live broadcast beside your chart to follow market coverage while reviewing prices. Panels can be moved, resized or opened in separate windows.
 
-![Market workspace with price charts, quotes, a watchlist and financial content](docs/images/market-workspace.jpg)
+Add **Live TV** from the sidebar and choose a channel. Playback starts muted; availability depends on the broadcaster, region and network.
 
-*A view of the running workspace, shown in Chinese.*
+![Market workspace with a price chart, quotes, news and Bloomberg TV](docs/images/market-workspace-en.jpg)
+
+*English workspace with Bloomberg TV playing beside the chart. Broadcasts and headlines remain in their original language.*
 
 ## Where the data comes from
 
@@ -64,6 +66,7 @@ Keep charts, quotes, watchlists and news in the same workspace, arranged around 
 | Fund NAV | Supported TD funds use TD Asset Management's official pages, with checks for fund code, series currency and NAV date. Not all funds are supported. |
 | Model interest rates and dividends | USD rates reference U.S. Treasury term rates. Dividend inputs use IBKR, Yahoo Finance or verified issuer information. |
 | News | Yahoo Finance RSS, Google News aggregation and the original publishers they link to. |
+| Financial TV | External streaming feeds for the selected channel. Video connects directly to the stream provider. |
 
 Quotes may be live, delayed, frozen or the last available observation, depending on market hours, subscriptions and provider access. Fields can have different sources and timestamps. Use the displayed provenance, timestamps and missing-data status to check them; do not assume every number is live.
 
